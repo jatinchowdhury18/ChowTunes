@@ -4,7 +4,7 @@ namespace chow_tunes
 {
 Main_Component::Main_Component()
 {
-    juce::Logger::writeToLog (chow_tunes::library::print_library (library));
+//    juce::Logger::writeToLog (chow_tunes::library::print_library (library));
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 
@@ -30,6 +30,9 @@ Main_Component::Main_Component()
         };
         song_list.addAndMakeVisible (new_cell.get());
     }
+    std::sort (song_list.cells.begin(), song_list.cells.end(), [] (auto& song_cell1, auto& song_cell2) {
+                   return song_cell1->song->name < song_cell2->song->name;
+               });
 
     startTimer (100);
     setSize (1250, 750);
