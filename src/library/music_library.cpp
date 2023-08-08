@@ -1,5 +1,9 @@
 #include "music_library.h"
 
+#if JUCE_WINDOWS
+#include <codecvt>
+#endif
+
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations")
 #include <fileref.h>
 #include <tag.h>
@@ -33,11 +37,15 @@ inline std::string_view temp_string (chowdsp::StackAllocator& alloc, std::string
     return temp_string (alloc, std::data (str), std::size (str));
 }
 
-//inline bool string_view_cmp (std::string_view str1, std::string_view str2)
-//{
-//    return str1.size() == str2.size()
-//           && str1[0] == str2[0];
-//}
+static std::string path_to_utf8 (const std::filesystem::path& path)
+{
+#if JUCE_WINDOWS
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> convert;
+    return convert.to_bytes (path.wstring());
+#else
+    return path.string();
+#endif
+}
 
 static Artist& get_artist_for_song (Music_Library& library, Song& song, std::string_view artist_name)
 {
@@ -87,7 +95,7 @@ Music_Library index_directory (const std::filesystem::path& path)
     library.albums.reserve (500);
     library.songs.reserve (5000);
 
-    std::printf ("Indexing directory: %s\n", path.c_str());
+    std::printf ("Indexing directory: %s\n", path_to_utf8 (path).c_str());
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
         //        std::printf ("    Entry: %s\n", dir_entry.path().c_str());
@@ -109,7 +117,8 @@ Music_Library index_directory (const std::filesystem::path& path)
             auto& song_album = get_album_for_song (library, song, to_string_view (tag->album()), song_artist);
 
             song.track_number = static_cast<int> (tag->track());
-            song.filepath = temp_string (library.stack_data, dir_entry.path().c_str(), dir_entry.path().string().size());
+            const auto filepath_str = path_to_utf8 (dir_entry.path());
+            song.filepath = temp_string (library.stack_data, filepath_str.data(), filepath_str.size());
             song_album.song_ids.push_back (song_id);
 
             //            std::cout << "-- TAG (basic) --" << std::endl;

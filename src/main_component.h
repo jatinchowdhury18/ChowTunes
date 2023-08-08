@@ -20,7 +20,13 @@ struct Main_Component : juce::Component,
     void timerCallback() override;
 
 private:
-    library::Music_Library library = library::index_directory ("/Users/jatin/test_music");
+#if JUCE_MAC
+    static constexpr std::string_view library_path { "/Users/jatin/test_music" };
+#elif JUCE_WINDOWS
+    static constexpr std::string_view library_path { "C:/Users/Jatin/test_music" };
+#endif
+
+    library::Music_Library library = library::index_directory (library_path);
     gui::List_Selector<gui::Song_Cell> song_list;
     audio::Audio_Player audio_player;
     juce::AudioFormatManager audio_format_manager;
