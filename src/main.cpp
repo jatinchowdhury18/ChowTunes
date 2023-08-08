@@ -1,4 +1,5 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
+#include <chrono>
 
 #include "main_component.h"
 #include "library/music_library.h"
@@ -88,7 +89,17 @@ public:
                     return true;
                 }
 
-                chow_tunes::library::index_directory (args[(int) idx + 1].toStdString().c_str());
+                namespace chrono = std::chrono;
+                const auto start = chrono::high_resolution_clock::now();
+                auto music_library = chow_tunes::library::index_directory (args[(int) idx + 1].toStdString().c_str());
+                const auto duration = chrono::high_resolution_clock::now() - start;
+
+                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
+                std::printf ("Scanned %d songs, from %d albums, from %d artists, in %d milliseconds\n",
+                             (int) music_library.songs.size(),
+                             (int) music_library.albums.size(),
+                             (int) music_library.artists.size(),
+                             (int) chrono::duration_cast<chrono::milliseconds>(duration).count());
 
                 return true;
             }

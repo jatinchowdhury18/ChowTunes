@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string_view>
 #include <vector>
 
 namespace chowdsp
@@ -43,12 +42,10 @@ public:
         return static_cast<T*> (allocate_bytes ((size_t) num_Ts * sizeof (T)));
     }
 
-    template <typename IntType>
-    std::string_view temp_string (const char* data, IntType count)
+    template <typename T, typename IntType>
+    T* data (IntType offset) noexcept
     {
-        auto* t_data = allocate<char> (count);
-        std::copy (data, data + count, t_data);
-        return { t_data, (size_t) count };
+        return reinterpret_cast<T*> (raw_data.data() + offset);
     }
 
     struct StackAllocatorFrame

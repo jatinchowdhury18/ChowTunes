@@ -28,12 +28,19 @@ juce_add_gui_app(ChowTunes
 target_sources(ChowTunes
     PRIVATE
         src/main.cpp
+        src/main_component.cpp
+        src/library/music_library.cpp
+        src/audio/audio_player.cpp
 )
 
 target_link_libraries(ChowTunes
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_dsp
         chowdsp::chowdsp_data_structures
+        chowdsp::chowdsp_buffers
+        chowdsp::chowdsp_math
+        chowdsp::chowdsp_plugin_utils
         tag
     PUBLIC
         juce::juce_recommended_warning_flags
@@ -60,8 +67,4 @@ target_include_directories(ChowTunes
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v2/frames
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-#        ${taglib_SOURCE_DIR}/bindings/c/
-
-#        ${taglib_SOURCE_DIR}/taglib
-#        ${taglib_SOURCE_DIR}/taglib/toolkit
 )
