@@ -34,6 +34,12 @@ target_compile_options(tag
         -Wno-unused-parameter -Wno-missing-variable-declarations -Wno-format-nonliteral -Wno-deprecated-dynamic-exception-spec
         -Wno-implicit-fallthrough -Wno-covered-switch-default -Wno-unreachable-code-loop-increment
 )
+CPMAddPackage(
+    NAME samplerate
+    GITHUB_REPOSITORY libsndfile/libsamplerate
+    GIT_TAG 0.2.2
+    OPTIONS "LIBSAMPLERATE_EXAMPLES OFF" "LIBSAMPLERATE_INSTALL OFF" "BUILD_TESTING OFF"
+)
 
 juce_add_gui_app(ChowTunes
     PRODUCT_NAME "ChowTunes"
@@ -54,8 +60,11 @@ target_link_libraries(ChowTunes
         chowdsp::chowdsp_data_structures
         chowdsp::chowdsp_buffers
         chowdsp::chowdsp_math
+        chowdsp::chowdsp_dsp_utils
+        chowdsp::chowdsp_sources
         chowdsp::chowdsp_plugin_utils
         tag
+        samplerate
     PUBLIC
         juce::juce_recommended_warning_flags
         juce::juce_recommended_config_flags
@@ -68,6 +77,7 @@ target_compile_definitions(ChowTunes
         JUCE_REPORT_APP_USAGE=0
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
+        CHOWDSP_USE_LIBSAMPLERATE=1
         TAGLIB_STATIC=1
 )
 

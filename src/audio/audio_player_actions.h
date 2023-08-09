@@ -19,5 +19,6 @@ struct Audio_Player_Action
 {
     Audio_Player_Action_Type action_type;
     std::unique_ptr<juce::AudioBuffer<float>> audio_buffer;
+    double sample_rate = 0.0;
 };
 }

@@ -26,6 +26,7 @@ Main_Component::Main_Component()
             audio::Audio_Player_Action action;
             action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
             action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
+            action.sample_rate = fs;
             audio_player.ui_to_audio_queue.enqueue (std::move (action));
         };
         song_list.addAndMakeVisible (new_cell.get());
@@ -54,7 +55,14 @@ void Main_Component::timerCallback()
     while (audio_player.audio_to_ui_queue.try_dequeue (action))
     {
         if (action.action_type == audio::Audio_Player_Action_Type::Dead_Song)
+        {
             action.audio_buffer.reset();
+        }
+        else if (action.action_type == audio::Audio_Player_Action_Type::Song_Finished)
+        {
+            action.audio_buffer.reset();
+            // go to next song in play queue...
+        }
     }
 }
 }
