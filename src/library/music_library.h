@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <string_view>
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
-#include "StackAllocator.h"
 
 namespace chow_tunes::library
 {
@@ -32,7 +31,7 @@ struct Song
     size_t artist_id {};
     size_t album_id {};
     std::string_view filepath {};
-    int track_number = -1; // starts indexing at 0
+    int track_number = -1; // starts indexing at 0, -1 is "invalid"
     // artwork
 };
 

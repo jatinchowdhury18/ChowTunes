@@ -19,16 +19,12 @@ public:
                                   .findColour (ResizableWindow::backgroundColourId),
                               DocumentWindow::allButtons)
         {
-#if JUCE_IOS || JUCE_ANDROID
-            setContentOwned (new MainComponent ("Bridge"), true);
-            setFullScreen (true);
-#else
             setUsingNativeTitleBar (true);
             setContentOwned (new chow_tunes::Main_Component, true);
 
             setResizable (true, false);
             centreWithSize (getWidth(), getHeight());
-#endif
+
             juce::Component::setVisible (true);
 
             //            Image icon = ImageCache::getFromMemory (BinaryData::logo_256_png, BinaryData::logo_256_pngSize);
@@ -52,7 +48,10 @@ public:
     void initialise (const juce::String& commandLine) override
     {
         if (handleInternalCommandLineOperations (commandLine))
+        {
             quit();
+            return;
+        }
 
         mainWindow = std::make_unique<MainWindow> (getApplicationName());
     }

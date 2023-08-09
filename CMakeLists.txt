@@ -11,7 +11,7 @@ CPMAddPackage(
 CPMAddPackage(
     NAME chowdsp_utils
     GITHUB_REPOSITORY Chowdhury-DSP/chowdsp_utils
-    GIT_TAG f20e74286aaba57bd6cc874a398efacb8a46fd91
+    GIT_TAG master
 )
 CPMAddPackage(
     NAME taglib
