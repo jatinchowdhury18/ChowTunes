@@ -51,6 +51,8 @@ target_sources(ChowTunes
         src/main_component.cpp
         src/library/music_library.cpp
         src/audio/audio_player.cpp
+
+        src/gui/library/library_view.cpp
 )
 
 target_link_libraries(ChowTunes

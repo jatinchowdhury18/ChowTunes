@@ -8,32 +8,8 @@ Main_Component::Main_Component()
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 
-    addAndMakeVisible (song_list);
-    for (const auto& song : library.songs)
-    {
-        auto& new_cell = song_list.cells.emplace_back (std::make_unique<gui::Song_Cell>());
-        new_cell->list = &song_list;
-        new_cell->song = &song;
-        new_cell->play_song_callback = [this] (std::string_view filepath)
-        {
-            auto [buffer, fs] = audio_file_helper->loadFile (juce::File { chowdsp::toString (filepath) });
-            if (buffer.getNumSamples() == 0)
-            {
-                jassertfalse;
-                return;
-            }
-
-            audio::Audio_Player_Action action;
-            action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
-            action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
-            action.sample_rate = fs;
-            audio_player.ui_to_audio_queue.enqueue (std::move (action));
-        };
-        song_list.addAndMakeVisible (new_cell.get());
-    }
-    std::sort (song_list.cells.begin(), song_list.cells.end(), [] (auto& song_cell1, auto& song_cell2) {
-                   return song_cell1->song->name < song_cell2->song->name;
-               });
+    addAndMakeVisible (library_view);
+    addAndMakeVisible (transport_view);
 
     startTimer (100);
     setSize (1250, 750);
@@ -46,7 +22,9 @@ void Main_Component::paint (juce::Graphics& g)
 
 void Main_Component::resized()
 {
-    song_list.setBounds (0, 0, 300, getHeight());
+    auto bounds = getLocalBounds();
+    library_view.setBounds (bounds.removeFromTop (proportionOfHeight (0.8f)));
+    transport_view.setBounds (bounds);
 }
 
 void Main_Component::timerCallback()

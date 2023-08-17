@@ -5,7 +5,9 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "audio/audio_player.h"
-#include "gui/list_selector.h"
+#include "gui/library/list_selector.h"
+#include "gui/library/library_view.h"
+#include "gui/transport_view.h"
 #include "library/music_library.h"
 
 namespace chow_tunes
@@ -26,10 +28,11 @@ private:
     static constexpr std::string_view library_path { "C:/Users/Jatin/test_music" };
 #endif
 
-    library::Music_Library library = library::index_directory (library_path);
-    gui::List_Selector<gui::Song_Cell> song_list;
-    audio::Audio_Player audio_player;
-    juce::AudioFormatManager audio_format_manager;
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
+    juce::AudioFormatManager audio_format_manager;
+    library::Music_Library library = library::index_directory (library_path);
+    audio::Audio_Player audio_player;
+    gui::Library_View library_view { library, audio_player };
+    gui::Transport_View transport_view;
 };
 } // namespace chow_tunes

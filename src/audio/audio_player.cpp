@@ -59,7 +59,7 @@ void Audio_Player::handle_incoming_messages()
     jassert (action.audio_buffer == nullptr);
 }
 
-bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
+bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept
 {
     write_buffer.clear();
 
@@ -84,7 +84,7 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
     if (write_index < write_buffer.getNumSamples() && leftover_samples.getNumSamples() > 0)
         write_from_leftovers();
 
-    if (sample_counter < playing_buffer->getNumSamples())
+    if (sample_counter <= playing_buffer->getNumSamples())
     {
         while (write_index < write_buffer.getNumSamples())
         {
@@ -119,7 +119,19 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
         }
     }
 
+    process_effects (write_buffer);
+
     return sample_counter == playing_buffer->getNumSamples() && leftover_samples.getNumSamples() == 0;
+}
+
+void Audio_Player::process_effects (const chowdsp::BufferView<float>& buffer) noexcept
+{
+    // @TODO: add effects here:
+    // - EQ
+    // - volume control
+    // - safety limiter/clipper
+
+    chowdsp::BufferMath::sanitizeBuffer (buffer, 5.0f);
 }
 
 void Audio_Player::audioDeviceAboutToStart (juce::AudioIODevice* device)

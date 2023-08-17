@@ -26,7 +26,8 @@ struct Audio_Player : juce::AudioIODeviceCallback
     void audioDeviceError (const juce::String &errorMessage) override;
 
     void handle_incoming_messages();
-    bool read_samples (const chowdsp::BufferView<float>& write_buffer);
+    bool read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept;
+    void process_effects (const chowdsp::BufferView<float>& buffer) noexcept;
 
     std::unique_ptr<juce::AudioBuffer<float>> playing_buffer {};
     double song_sample_rate = 48000.0;
