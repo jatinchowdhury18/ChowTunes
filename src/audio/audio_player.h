@@ -29,9 +29,17 @@ struct Audio_Player : juce::AudioIODeviceCallback
     bool read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept;
     void process_effects (const chowdsp::BufferView<float>& buffer) noexcept;
 
+    enum class State
+    {
+        Playing,
+        Paused,
+        Stopped,
+    };
+
     std::unique_ptr<juce::AudioBuffer<float>> playing_buffer {};
     double song_sample_rate = 48000.0;
     int sample_counter = 0;
+    std::atomic<State> state { State::Stopped };
 
     juce::AudioDeviceManager audio_device_manager;
     double device_sample_rate = 48000.0;

@@ -54,6 +54,7 @@ target_sources(ChowTunes
 
         src/gui/library/library_view.cpp
         src/gui/library/list_selector.cpp
+        src/gui/transport_view.cpp
 )
 
 target_link_libraries(ChowTunes

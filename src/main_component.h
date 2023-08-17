@@ -33,6 +33,6 @@ private:
     library::Music_Library library = library::index_directory (library_path);
     audio::Audio_Player audio_player;
     gui::Library_View library_view { library, audio_player };
-    gui::Transport_View transport_view;
+    gui::Transport_View transport_view { audio_player };
 };
 } // namespace chow_tunes

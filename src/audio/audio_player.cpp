@@ -27,16 +27,23 @@ void Audio_Player::audioDeviceIOCallbackWithContext ([[maybe_unused]] const floa
 {
     handle_incoming_messages();
 
-    if (playing_buffer == nullptr)
+    auto out_buffer = chowdsp::BufferView<float> { outputChannelData, numOutputChannels, numSamples };
+    if (playing_buffer == nullptr || state.load() != State::Playing)
+    {
+        out_buffer.clear();
         return;
+    }
 
-    const auto is_finished = read_samples ({ outputChannelData, numOutputChannels, numSamples });
+    const auto is_finished = read_samples (out_buffer);
     if (is_finished)
     {
         Audio_Player_Action action;
         action.action_type = Audio_Player_Action_Type::Song_Finished;
         action.audio_buffer.swap (playing_buffer);
     }
+
+    if (playing_buffer == nullptr)
+        state.store (State::Stopped);
 }
 
 void Audio_Player::handle_incoming_messages()
@@ -50,8 +57,25 @@ void Audio_Player::handle_incoming_messages()
             song_sample_rate = action.sample_rate;
             playing_buffer.swap (action.audio_buffer);
             leftover_samples.setCurrentSize (2, 0);
+
             action.action_type = Audio_Player_Action_Type::Dead_Song;
-            audio_to_ui_queue.try_dequeue (action);
+            audio_to_ui_queue.try_enqueue (std::move (action));
+
+            sample_counter = 0;
+            state.store (State::Playing);
+
+            for (auto& resampler : resamplers)
+                src_reset (resampler.get());
+        }
+        else if (action.action_type == Audio_Player_Action_Type::Play_Song)
+        {
+            jassert (playing_buffer != nullptr);
+            state.store (State::Playing);
+        }
+        else if (action.action_type == Audio_Player_Action_Type::Pause_Song)
+        {
+            jassert (playing_buffer != nullptr);
+            state.store (State::Paused);
         }
     }
 
@@ -84,38 +108,35 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
     if (write_index < write_buffer.getNumSamples() && leftover_samples.getNumSamples() > 0)
         write_from_leftovers();
 
-    if (sample_counter <= playing_buffer->getNumSamples())
+    while (sample_counter < playing_buffer->getNumSamples() && write_index < write_buffer.getNumSamples())
     {
-        while (write_index < write_buffer.getNumSamples())
+        leftover_samples.setCurrentSize (2, small_block_size * (int) std::ceil (resample_ratio) + 1);
+        const auto num_samples_to_read = juce::jmin (small_block_size, playing_buffer->getNumSamples() - sample_counter);
+
+        int samples_pulled = 0;
+        for (int ch = 0; ch < write_buffer.getNumChannels(); ++ch)
         {
-            leftover_samples.setCurrentSize (2, small_block_size * (int) std::ceil (resample_ratio) + 1);
-            const auto num_samples_to_read = juce::jmin (small_block_size, playing_buffer->getNumSamples() - sample_counter);
+            SRC_DATA src_data {
+                .data_in = playing_buffer->getReadPointer (ch) + sample_counter,
+                .data_out = leftover_samples.getWritePointer (ch),
+                .input_frames = num_samples_to_read,
+                .output_frames = leftover_samples.getNumSamples(),
+                .end_of_input = sample_counter + num_samples_to_read == playing_buffer->getNumSamples() ? 1 : 0,
+                .src_ratio = resample_ratio
+            };
 
-            int samples_pulled = 0;
-            for (int ch = 0; ch < write_buffer.getNumChannels(); ++ch)
-            {
-                SRC_DATA src_data {
-                    .data_in = playing_buffer->getReadPointer (ch) + sample_counter,
-                    .data_out = leftover_samples.getWritePointer (ch),
-                    .input_frames = num_samples_to_read,
-                    .output_frames = leftover_samples.getNumSamples(),
-                    .end_of_input = sample_counter + num_samples_to_read == playing_buffer->getNumSamples() ? 1 : 0,
-                    .src_ratio = resample_ratio
-                };
+            src_process (resamplers[(size_t) ch].get(), &src_data);
 
-                src_process (resamplers[(size_t) ch].get(), &src_data);
+            jassert (src_data.input_frames_used == num_samples_to_read);
+            jassert (samples_pulled == 0 || samples_pulled == src_data.output_frames_gen);
+            samples_pulled = (int) src_data.output_frames_gen;
+        }
 
-                jassert (src_data.input_frames_used == num_samples_to_read);
-                jassert (samples_pulled == 0 || samples_pulled == src_data.output_frames_gen);
-                samples_pulled = (int) src_data.output_frames_gen;
-            }
-
-            if (samples_pulled > 0)
-            {
-                sample_counter += num_samples_to_read;
-                leftover_samples.setCurrentSize (2, samples_pulled);
-                write_from_leftovers();
-            }
+        if (samples_pulled > 0)
+        {
+            sample_counter += num_samples_to_read;
+            leftover_samples.setCurrentSize (2, samples_pulled);
+            write_from_leftovers();
         }
     }
 
