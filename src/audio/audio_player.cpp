@@ -2,7 +2,6 @@
 
 #include <chowdsp_buffers/chowdsp_buffers.h>
 #include <chowdsp_math/chowdsp_math.h>
-#include <chowdsp_simd/chowdsp_simd.h>
 #include <juce_dsp/juce_dsp.h>
 
 namespace chow_tunes::audio
@@ -80,7 +79,7 @@ void Audio_Player::handle_incoming_messages()
     }
 
     // If this is false, then we will have a de-allocation here, which would be bad!!
-    jassert (action.audio_buffer == nullptr);
+    jassert (action.audio_buffer == nullptr); // NOLINT
 }
 
 bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept
