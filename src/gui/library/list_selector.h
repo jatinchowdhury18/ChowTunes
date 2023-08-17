@@ -8,15 +8,33 @@ namespace chow_tunes::gui
 template <typename Cell_Type>
 struct List_Selector : juce::Viewport
 {
-    std::vector<std::unique_ptr<Cell_Type>> cells;
+    using Cell_List = std::vector<std::unique_ptr<Cell_Type>>;
+    Cell_List cells;
+
+    List_Selector()
+    {
+        internal.parent = this;
+        setViewedComponent (&internal, false);
+    }
+
+    void update_size()
+    {
+        internal.setBounds (0,
+                            0,
+                            getWidth(),
+                            juce::jmax (List_Selector_Internal::cell_height * (int) cells.size(), getHeight()));
+        internal.resized();
+    }
+
+    void add_cell (Cell_Type& cell)
+    {
+        cell.list = this;
+        internal.addAndMakeVisible (cell);
+    }
 
     void resized() override
     {
-        static constexpr auto cell_height = 30;
-        for (auto [idx, cell] : chowdsp::enumerate (cells))
-        {
-            cell->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
-        }
+        update_size();
     }
 
     void clear_selection()
@@ -24,6 +42,21 @@ struct List_Selector : juce::Viewport
         for (auto& cell : cells)
             cell->is_selected = false;
     }
+
+    struct List_Selector_Internal : juce::Component
+    {
+        List_Selector* parent = nullptr;
+
+        static constexpr auto cell_height = 30;
+        void resized() override
+        {
+            for (auto [idx, cell] : chowdsp::enumerate (parent->cells))
+            {
+                cell->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
+            }
+        }
+    };
+    List_Selector_Internal internal;
 
     //    void paint (juce::Graphics& g) override
     //    {
