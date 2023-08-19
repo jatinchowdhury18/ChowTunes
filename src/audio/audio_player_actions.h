@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chowdsp_listeners/chowdsp_listeners.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 
 // forward declarations
@@ -28,6 +29,7 @@ enum class Audio_Player_Action_Type
     Start_New_Song,
     Play_Song,
     Pause_Song,
+    Restart_Song,
     Previous_Song,
     Next_Song,
     Song_Finished,
@@ -49,5 +51,6 @@ struct Audio_Player_Action_Router
 
     Audio_Player& audio_player;
     play_queue::Play_Queue& play_queue;
+    chowdsp::Broadcaster<void()> play_state_changed;
 };
 }

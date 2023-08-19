@@ -37,7 +37,7 @@ private:
     play_queue::Play_Queue play_queue;
     audio::Audio_Player_Action_Router action_router { .audio_player = audio_player, .play_queue = play_queue };
     gui::Library_View library_view { library, play_queue };
-    gui::Transport_View transport_view { audio_player };
+    gui::Transport_View transport_view { action_router };
     gui::Play_Queue_View play_queue_view { play_queue };
 };
 } // namespace chow_tunes

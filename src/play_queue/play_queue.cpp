@@ -8,14 +8,34 @@ void Play_Queue::init()
     queue.reserve (100);
 }
 
+static void play_song_from_queue (Play_Queue& play_queue, int song_index)
+{
+    const auto& song = *play_queue.queue[(size_t) song_index];
+    play_queue.action_router->route_action (audio::create_play_song_action (song));
+    play_queue.queue_changed();
+}
+
+void Play_Queue::play_previous_song()
+{
+    if (currently_playing_song_index < 1)
+        return;
+    play_song_from_queue (*this, --currently_playing_song_index);
+}
+
 void Play_Queue::play_next_song()
 {
     if (currently_playing_song_index >= (int) queue.size() - 1)
         return;
-
-    const auto& song = *queue[(size_t) ++currently_playing_song_index];
-    action_router->route_action (audio::create_play_song_action (song));
+    play_song_from_queue (*this, ++currently_playing_song_index);
 }
+
+void Play_Queue::restart_current_song()
+{
+    if (currently_playing_song_index < 0)
+        return;
+    play_song_from_queue (*this, currently_playing_song_index);
+}
+
 
 void Play_Queue::add_to_queue (std::span<const library::Song*> songs_to_add, Add_To_Queue_Action action)
 {

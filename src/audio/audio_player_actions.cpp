@@ -28,18 +28,43 @@ Audio_Player_Action create_play_song_action (const library::Song& song)
 
 void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
 {
-    if (action.action_type == Audio_Player_Action_Type::Start_New_Song)
+    using Action_Type = Audio_Player_Action_Type;
+    using Play_State = audio::Audio_Player::State;
+
+    if (action.action_type == Action_Type::Start_New_Song)
     {
         audio_player.ui_to_audio_queue.enqueue (std::move (action));
     }
-    else if (action.action_type == audio::Audio_Player_Action_Type::Dead_Song)
+    else if (action.action_type == Action_Type::Dead_Song)
     {
         action.audio_buffer.reset();
     }
-    else if (action.action_type == audio::Audio_Player_Action_Type::Song_Finished)
+    else if (action.action_type == Action_Type::Song_Finished)
     {
         action.audio_buffer.reset();
         play_queue.play_next_song();
     }
+    else if (action.action_type == Action_Type::Play_Song)
+    {
+        chowdsp::AtomicHelpers::compareExchange (audio_player.state, Play_State::Paused, Play_State::Playing);
+    }
+    else if (action.action_type == Action_Type::Pause_Song)
+    {
+        chowdsp::AtomicHelpers::compareExchange (audio_player.state, Play_State::Playing, Play_State::Paused);
+    }
+    else if (action.action_type == Action_Type::Restart_Song)
+    {
+        play_queue.restart_current_song();
+    }
+    else if (action.action_type == Action_Type::Previous_Song)
+    {
+        play_queue.play_previous_song();
+    }
+    else if (action.action_type == Action_Type::Next_Song)
+    {
+        play_queue.play_next_song();
+    }
+
+    play_state_changed();
 }
 } // namespace chow_tunes::audio

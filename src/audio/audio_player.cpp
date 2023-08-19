@@ -66,16 +66,6 @@ void Audio_Player::handle_incoming_messages()
             for (auto& resampler : resamplers)
                 src_reset (resampler.get());
         }
-        else if (action.action_type == Audio_Player_Action_Type::Play_Song)
-        {
-            jassert (playing_buffer != nullptr);
-            state.store (State::Playing);
-        }
-        else if (action.action_type == Audio_Player_Action_Type::Pause_Song)
-        {
-            jassert (playing_buffer != nullptr);
-            state.store (State::Paused);
-        }
     }
 
     // If this is false, then we will have a de-allocation here, which would be bad!!
@@ -151,6 +141,8 @@ void Audio_Player::process_effects (const chowdsp::BufferView<float>& buffer) no
     // - volume control
     // - safety limiter/clipper
 
+    volume_gain.process (buffer);
+
     chowdsp::BufferMath::sanitizeBuffer (buffer, 5.0f);
 }
 
@@ -161,6 +153,14 @@ void Audio_Player::audioDeviceAboutToStart (juce::AudioIODevice* device)
                               + ", and block size: " + juce::String { device->getCurrentBufferSizeSamples() });
 
     device_sample_rate = device->getCurrentSampleRate();
+
+    const auto spec = juce::dsp::ProcessSpec {
+        .sampleRate = device_sample_rate,
+        .maximumBlockSize = (uint32_t) device->getCurrentBufferSizeSamples(),
+        .numChannels = (uint32_t) device->getActiveOutputChannels().toInteger()
+    };
+    volume_gain.prepare (spec);
+    volume_gain.setGainDecibels (-12.0f);
 }
 
 void Audio_Player::audioDeviceStopped()

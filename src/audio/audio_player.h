@@ -56,5 +56,8 @@ struct Audio_Player : juce::AudioIODeviceCallback
 
     static constexpr auto small_block_size = 64;
     chowdsp::StaticBuffer<float, 2, 4 * small_block_size> leftover_samples { 2, 4 * small_block_size };
+
+    // Effects chain (maybe refactor later)
+    chowdsp::Gain<float> volume_gain;
 };
 } // namespace chow_tunes::audio

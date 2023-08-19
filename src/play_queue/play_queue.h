@@ -22,7 +22,9 @@ struct Play_Queue
     };
 
     void init();
+    void play_previous_song();
     void play_next_song();
+    void restart_current_song();
 
     void add_to_queue (std::span<const library::Song*> songs_to_add, Add_To_Queue_Action action);
     void move_song_up (const library::Song* song);
