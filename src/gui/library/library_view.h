@@ -3,21 +3,23 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 #include "list_selector.h"
 
-namespace chow_tunes::library
+namespace chow_tunes
 {
-struct Music_Library;
+namespace library
+{
+    struct Music_Library;
 }
-
-namespace chow_tunes::audio
+namespace play_queue
 {
-struct Audio_Player;
+    struct Play_Queue;
+}
 }
 
 namespace chow_tunes::gui
 {
 struct Library_View : juce::Component
 {
-    Library_View (const library::Music_Library& library, audio::Audio_Player& audio_player);
+    Library_View (const library::Music_Library& library, play_queue::Play_Queue& play_queue);
 
     void resized() override;
 
@@ -30,7 +32,7 @@ struct Library_View : juce::Component
     gui::List_Selector<gui::Artist_Cell> artist_list;
 
     const library::Music_Library& library;
-    audio::Audio_Player& audio_player;
+    play_queue::Play_Queue& play_queue;
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
 };
 } // namespace chow_tunes::gui

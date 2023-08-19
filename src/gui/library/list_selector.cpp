@@ -7,6 +7,7 @@ static constexpr auto cell_height = 30;
 template <typename Cell_Type>
 List_Selector<Cell_Type>::List_Selector()
 {
+    cells.reserve (100);
     internal.parent = this;
     setViewedComponent (&internal, false);
 }
@@ -53,61 +54,53 @@ template struct List_Selector<Album_Cell>;
 template struct List_Selector<Artist_Cell>;
 
 //=============================================
-static void paint_cell (juce::Graphics& g,
-                        bool is_selected,
-                        const juce::String& text,
-                        const juce::Rectangle<int>& bounds)
+template <typename Data_Type, typename Cell_Type>
+void Cell_Base<Data_Type, Cell_Type>::paint (juce::Graphics& g)
 {
     if (is_selected)
         g.fillAll (juce::Colours::dodgerblue.withAlpha (0.5f));
 
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
-    g.drawFittedText (text, bounds, juce::Justification::centredLeft, 1);
+    g.drawFittedText (chowdsp::toString (label_text), getLocalBounds(), juce::Justification::centredLeft, 1);
 }
 
-template <typename Cell_Type>
-static bool select_cell (Cell_Type& cell)
+template <typename Data_Type, typename Cell_Type>
+void Cell_Base<Data_Type, Cell_Type>::select_cell()
 {
-    if (cell.is_selected)
-        return false;
+    if (is_selected)
+        return;
 
-    cell.list->clear_selection();
-    cell.is_selected = true;
-    cell.list->repaint();
-    return true;
+    list->clear_selection();
+    is_selected = true;
+    list->repaint();
 }
 
-void Song_Cell::paint (juce::Graphics& g)
+template <typename Data_Type, typename Cell_Type>
+void Cell_Base<Data_Type, Cell_Type>::mouseDown (const juce::MouseEvent& e)
 {
-    paint_cell (g, is_selected, chowdsp::toString (song->name), getLocalBounds());
+    if (list->select_on_click)
+        select_cell();
+
+    if (e.mods.isPopupMenu())
+    {
+        cell_right_clicked (*data);
+        return;
+    }
+
+    cell_clicked (*data);
 }
 
-void Song_Cell::mouseDown (const juce::MouseEvent&)
+template <typename Data_Type, typename Cell_Type>
+void Cell_Base<Data_Type, Cell_Type>::mouseDoubleClick (const juce::MouseEvent&)
 {
-    if (select_cell (*this))
-        song_selected_callback (*song);
+    if (list->select_on_click)
+        select_cell();
+
+    cell_double_clicked (*data);
 }
 
-void Album_Cell::paint (juce::Graphics& g)
-{
-    paint_cell (g, is_selected, chowdsp::toString (album->name), getLocalBounds());
-}
-
-void Album_Cell::mouseDown (const juce::MouseEvent&)
-{
-    if (select_cell (*this))
-        album_selected_callback (*album);
-}
-
-void Artist_Cell::paint (juce::Graphics& g)
-{
-    paint_cell (g, is_selected, chowdsp::toString (artist->name), getLocalBounds());
-}
-
-void Artist_Cell::mouseDown (const juce::MouseEvent&)
-{
-    if (select_cell (*this))
-        artist_selected_callback (*artist);
-}
+template struct Cell_Base<library::Song, Song_Cell>;
+template struct Cell_Base<library::Album, Album_Cell>;
+template struct Cell_Base<library::Artist, Artist_Cell>;
 } // namespace chow_tunes::gui

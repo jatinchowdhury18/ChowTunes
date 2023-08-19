@@ -49,11 +49,16 @@ target_sources(ChowTunes
     PRIVATE
         src/main.cpp
         src/main_component.cpp
+
         src/library/music_library.cpp
+        src/play_queue/play_queue.cpp
+
         src/audio/audio_player.cpp
+        src/audio/audio_player_actions.cpp
 
         src/gui/library/library_view.cpp
         src/gui/library/list_selector.cpp
+        src/gui/play_queue_view.cpp
         src/gui/transport_view.cpp
 )
 

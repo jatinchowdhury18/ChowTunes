@@ -14,7 +14,10 @@ struct Transport_View : juce::Component
     explicit Transport_View (audio::Audio_Player& player);
     void resized() override;
 
+    juce::TextButton prevButton { "PREVIOUS" };
+    juce::TextButton restartButton { "RESTART" };
     juce::TextButton playButton { "PLAY" };
     juce::TextButton pauseButton { "PAUSE" };
+    juce::TextButton nextButton { "NEXT" };
 };
 } // namespace chow_tunes::gui

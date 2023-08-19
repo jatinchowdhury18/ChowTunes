@@ -8,8 +8,11 @@ Main_Component::Main_Component()
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 
+    play_queue.action_router = &action_router;
+
     addAndMakeVisible (library_view);
     addAndMakeVisible (transport_view);
+    addAndMakeVisible (play_queue_view);
 
     startTimer (100);
     setSize (1250, 750);
@@ -23,24 +26,15 @@ void Main_Component::paint (juce::Graphics& g)
 void Main_Component::resized()
 {
     auto bounds = getLocalBounds();
-    library_view.setBounds (bounds.removeFromTop (proportionOfHeight (0.8f)));
-    transport_view.setBounds (bounds);
+    transport_view.setBounds (bounds.removeFromBottom (proportionOfHeight (0.2f)));
+    play_queue_view.setBounds (bounds.removeFromRight (proportionOfWidth (0.3f)));
+    library_view.setBounds (bounds);
 }
 
 void Main_Component::timerCallback()
 {
     audio::Audio_Player_Action action;
     while (audio_player.audio_to_ui_queue.try_dequeue (action))
-    {
-        if (action.action_type == audio::Audio_Player_Action_Type::Dead_Song)
-        {
-            action.audio_buffer.reset();
-        }
-        else if (action.action_type == audio::Audio_Player_Action_Type::Song_Finished)
-        {
-            action.audio_buffer.reset();
-            // go to next song in play queue...
-        }
-    }
+        action_router.route_action (std::move (action));
 }
 }

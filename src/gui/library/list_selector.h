@@ -8,9 +8,6 @@ namespace chow_tunes::gui
 template <typename Cell_Type>
 struct List_Selector : juce::Viewport
 {
-    using Cell_List = std::vector<std::unique_ptr<Cell_Type>>;
-    Cell_List cells;
-
     List_Selector();
 
     void update_size();
@@ -24,38 +21,39 @@ struct List_Selector : juce::Viewport
         List_Selector* parent = nullptr;
         void resized() override;
     } internal;
+
+    using Cell_List = std::vector<std::unique_ptr<Cell_Type>>;
+    Cell_List cells;
+
+    bool select_on_click = true;
 };
 
-struct Song_Cell : juce::Component
+template <typename Data_Type, typename Cell_Type>
+struct Cell_Base : juce::Component
 {
-    const library::Song* song = nullptr;
-    List_Selector<Song_Cell>* list = nullptr;
+    const Data_Type* data = nullptr;
+    List_Selector<Cell_Type>* list = nullptr;
     bool is_selected = false;
-    std::function<void (const library::Song&)> song_selected_callback {};
+    std::string_view label_text {};
+
+    std::function<void (const Data_Type&)> cell_clicked = [] (const Data_Type&) {};
+    std::function<void (const Data_Type&)> cell_right_clicked = [] (const Data_Type&) {};
+    std::function<void (const Data_Type&)> cell_double_clicked = [] (const Data_Type&) {};
+
+    void select_cell();
 
     void paint (juce::Graphics& g) override;
     void mouseDown (const juce::MouseEvent&) override;
+    void mouseDoubleClick (const juce::MouseEvent&) override;
 };
 
-struct Album_Cell : juce::Component
+struct Song_Cell : Cell_Base<library::Song, Song_Cell>
 {
-    const library::Album* album = nullptr;
-    List_Selector<Album_Cell>* list = nullptr;
-    bool is_selected = false;
-    std::function<void (const library::Album&)> album_selected_callback {};
-
-    void paint (juce::Graphics& g) override;
-    void mouseDown (const juce::MouseEvent&) override;
 };
-
-struct Artist_Cell : juce::Component
+struct Album_Cell : Cell_Base<library::Album, Album_Cell>
 {
-    const library::Artist* artist = nullptr;
-    List_Selector<Artist_Cell>* list = nullptr;
-    bool is_selected = false;
-    std::function<void (const library::Artist&)> artist_selected_callback {};
-
-    void paint (juce::Graphics& g) override;
-    void mouseDown (const juce::MouseEvent&) override;
+};
+struct Artist_Cell : Cell_Base<library::Artist, Artist_Cell>
+{
 };
 } // namespace chow_tunes::gui
