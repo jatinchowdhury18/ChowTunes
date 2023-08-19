@@ -14,7 +14,7 @@ Main_Component::Main_Component()
     addAndMakeVisible (transport_view);
     addAndMakeVisible (play_queue_view);
 
-    startTimer (100);
+    startTimer (5);
     setSize (1250, 750);
 }
 

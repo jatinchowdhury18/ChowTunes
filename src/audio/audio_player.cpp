@@ -141,6 +141,7 @@ void Audio_Player::process_effects (const chowdsp::BufferView<float>& buffer) no
     // - volume control
     // - safety limiter/clipper
 
+    volume_gain.setGainLinear (juce::Decibels::decibelsToGain (volume_db.load(), min_gain_db));
     volume_gain.process (buffer);
 
     chowdsp::BufferMath::sanitizeBuffer (buffer, 5.0f);
@@ -159,8 +160,10 @@ void Audio_Player::audioDeviceAboutToStart (juce::AudioIODevice* device)
         .maximumBlockSize = (uint32_t) device->getCurrentBufferSizeSamples(),
         .numChannels = (uint32_t) device->getActiveOutputChannels().toInteger()
     };
+
+    volume_gain.setRampDurationSeconds (0.05);
+    volume_gain.setGainDecibels (juce::Decibels::decibelsToGain (volume_db.load(), min_gain_db));
     volume_gain.prepare (spec);
-    volume_gain.setGainDecibels (-12.0f);
 }
 
 void Audio_Player::audioDeviceStopped()

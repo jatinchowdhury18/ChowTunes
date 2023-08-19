@@ -21,6 +21,7 @@ struct Transport_View : juce::Component
     juce::TextButton play_button { "PLAY" };
     juce::TextButton pause_button { "PAUSE" };
     juce::TextButton next_button { "NEXT" };
+    juce::Slider volume_slider;
 
     chowdsp::ScopedCallbackList button_change_callbacks;
 };

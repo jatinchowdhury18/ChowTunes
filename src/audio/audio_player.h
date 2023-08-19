@@ -58,6 +58,8 @@ struct Audio_Player : juce::AudioIODeviceCallback
     chowdsp::StaticBuffer<float, 2, 4 * small_block_size> leftover_samples { 2, 4 * small_block_size };
 
     // Effects chain (maybe refactor later)
+    static constexpr auto min_gain_db = -30.0f;
+    std::atomic<float> volume_db { -6.0f };
     chowdsp::Gain<float> volume_gain;
 };
 } // namespace chow_tunes::audio

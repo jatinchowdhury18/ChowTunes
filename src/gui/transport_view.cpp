@@ -45,10 +45,7 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
         const auto play_state = player.state.load();
 
         play_button.setEnabled (play_state == Play_State::Paused);
-//        play_button.setToggleState (play_state == Play_State::Playing, juce::dontSendNotification);
-
         pause_button.setEnabled (play_state == Play_State::Playing);
-//        pause_button.setToggleState (play_state == Play_State::Paused, juce::dontSendNotification);
     };
 
     button_change_callbacks += {
@@ -56,6 +53,17 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
         action_router.play_state_changed.connect (update_button_states),
     };
     update_button_states();
+
+    volume_slider.setSliderStyle (juce::Slider::SliderStyle::LinearHorizontal);
+    volume_slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 80, 20);
+    volume_slider.setTextValueSuffix (" dB");
+    volume_slider.setRange ({ audio::Audio_Player::min_gain_db, 6.0 }, 0.1);
+    volume_slider.setValue (action_router.audio_player.volume_db, juce::dontSendNotification);
+    volume_slider.onValueChange = [this, &player = action_router.audio_player]
+    {
+        player.volume_db.store ((float) volume_slider.getValue());
+    };
+    addAndMakeVisible (volume_slider);
 }
 
 void Transport_View::resized()
@@ -66,5 +74,6 @@ void Transport_View::resized()
     play_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     pause_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     next_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
+    volume_slider.setBounds (bounds.removeFromLeft (200).withHeight (50).reduced (5));
 }
 } // namespace chow_tunes::gui
