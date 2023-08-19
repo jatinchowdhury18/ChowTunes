@@ -39,7 +39,7 @@ listen to all that music.
 I dislike most media players, since they are often somewhat large and slow, and have
 many features that I don't really care about, while missing some features that I do want.
 
-For a long while I've used the [Dopamine](https://github.com/digimezzo/dopamine), which has
+For a long while I've used [Dopamine](https://github.com/digimezzo/dopamine), which has
 treated me quite well. However, I wanted to see if I could make something a little bit
 smaller and simpler that still got me the few features that I want in an audio player.
 

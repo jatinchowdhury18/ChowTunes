@@ -27,10 +27,11 @@ private:
 #if JUCE_MAC
     static constexpr std::string_view library_path { "/Users/jatin/test_music" };
 #elif JUCE_WINDOWS
-#if JUCE_RELEASE
+#if JUCE_DEBUG
+//    static constexpr std::string_view library_path { "C:/Users/Jatin/test_music" };
     static constexpr std::string_view library_path { "C:/Users/Jatin/Music" };
 #else
-    static constexpr std::string_view library_path { "C:/Users/Jatin/test_music" };
+    static constexpr std::string_view library_path { "C:/Users/Jatin/Music" };
 #endif
 #endif
 

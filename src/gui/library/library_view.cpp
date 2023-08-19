@@ -151,6 +151,12 @@ Library_View::Library_View (const library::Music_Library& lib, play_queue::Play_
     addAndMakeVisible (song_list);
     addAndMakeVisible (album_list);
     addAndMakeVisible (artist_list);
+
+    song_list.cell_entries.reserve (1000);
+    song_list.cell_components.reserve (1000);
+    artist_list.cell_entries.reserve (1000);
+    artist_list.cell_components.reserve (1000);
+
     load_artist_list (library.artists);
 }
 
