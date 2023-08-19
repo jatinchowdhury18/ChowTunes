@@ -138,7 +138,6 @@ void Audio_Player::process_effects (const chowdsp::BufferView<float>& buffer) no
 {
     // @TODO: add effects here:
     // - EQ
-    // - volume control
     // - safety limiter/clipper
 
     volume_gain.setGainLinear (juce::Decibels::decibelsToGain (volume_db.load(), min_gain_db));

@@ -27,9 +27,9 @@ struct Library_View : juce::Component
     void load_album_list (std::span<const size_t> album_ids);
     void load_song_list (std::span<const size_t> song_ids);
 
-    gui::List_Selector<gui::Song_Cell> song_list;
-    gui::List_Selector<gui::Album_Cell> album_list;
-    gui::List_Selector<gui::Artist_Cell> artist_list;
+    gui::List_Selector<library::Song> song_list;
+    gui::List_Selector<library::Album> album_list;
+    gui::List_Selector<library::Artist> artist_list;
 
     const library::Music_Library& library;
     play_queue::Play_Queue& play_queue;

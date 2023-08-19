@@ -4,58 +4,62 @@ namespace chow_tunes::gui
 {
 static constexpr auto cell_height = 30;
 
-template <typename Cell_Type>
-List_Selector<Cell_Type>::List_Selector()
+template <typename Cell_Data>
+List_Selector<Cell_Data>::List_Selector()
 {
-    cells.reserve (100);
+    cell_entries.reserve (100);
+    cell_components.reserve (100);
     internal.parent = this;
     setViewedComponent (&internal, false);
 }
 
-template <typename Cell_Type>
-void List_Selector<Cell_Type>::update_size()
+template <typename Cell_Data>
+void List_Selector<Cell_Data>::update_size()
 {
     internal.setBounds (0,
                         0,
                         getWidth(),
-                        juce::jmax (cell_height * (int) cells.size(), getHeight()));
+                        juce::jmax (cell_height * (int) cell_entries.size(), getHeight()));
     internal.resized();
 }
 
-template <typename Cell_Type>
-void List_Selector<Cell_Type>::add_cell (Cell_Type& cell)
+template <typename Cell_Data>
+void List_Selector<Cell_Data>::add_cell (Cell_Entry& entry, Cell_Component& cell)
 {
     cell.list = this;
+    cell.data = entry.data;
     internal.addAndMakeVisible (cell);
+    entry.component_id = cell_components.size() - 1;
+    jassert (cell_components[entry.component_id].get() == &cell);
 }
 
-template <typename Cell_Type>
-void List_Selector<Cell_Type>::resized()
+template <typename Cell_Data>
+void List_Selector<Cell_Data>::resized()
 {
     update_size();
 }
 
-template <typename Cell_Type>
-void List_Selector<Cell_Type>::clear_selection()
+template <typename Cell_Data>
+void List_Selector<Cell_Data>::clear_selection()
 {
-    for (auto& cell : cells)
+    for (auto& cell : cell_components)
         cell->is_selected = false;
 }
 
-template <typename Cell_Type>
-void List_Selector<Cell_Type>::List_Selector_Internal::resized()
+template <typename Cell_Data>
+void List_Selector<Cell_Data>::List_Selector_Internal::resized()
 {
-    for (auto [idx, cell] : chowdsp::enumerate (parent->cells))
-        cell->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
+    for (auto [idx, cell] : chowdsp::enumerate (parent->cell_entries))
+        parent->cell_components[cell.component_id]->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
 }
 
-template struct List_Selector<Song_Cell>;
-template struct List_Selector<Album_Cell>;
-template struct List_Selector<Artist_Cell>;
+template struct List_Selector<library::Song>;
+template struct List_Selector<library::Album>;
+template struct List_Selector<library::Artist>;
 
 //=============================================
-template <typename Data_Type, typename Cell_Type>
-void Cell_Base<Data_Type, Cell_Type>::paint (juce::Graphics& g)
+template <typename Cell_Data>
+void Cell_Base<Cell_Data>::paint (juce::Graphics& g)
 {
     if (is_selected)
         g.fillAll (juce::Colours::dodgerblue.withAlpha (0.5f));
@@ -65,8 +69,8 @@ void Cell_Base<Data_Type, Cell_Type>::paint (juce::Graphics& g)
     g.drawFittedText (chowdsp::toString (label_text), getLocalBounds(), juce::Justification::centredLeft, 1);
 }
 
-template <typename Data_Type, typename Cell_Type>
-void Cell_Base<Data_Type, Cell_Type>::select_cell()
+template <typename Cell_Data>
+void Cell_Base<Cell_Data>::select_cell()
 {
     if (is_selected)
         return;
@@ -76,8 +80,8 @@ void Cell_Base<Data_Type, Cell_Type>::select_cell()
     list->repaint();
 }
 
-template <typename Data_Type, typename Cell_Type>
-void Cell_Base<Data_Type, Cell_Type>::mouseDown (const juce::MouseEvent& e)
+template <typename Cell_Data>
+void Cell_Base<Cell_Data>::mouseDown (const juce::MouseEvent& e)
 {
     if (list->select_on_click)
         select_cell();
@@ -91,8 +95,8 @@ void Cell_Base<Data_Type, Cell_Type>::mouseDown (const juce::MouseEvent& e)
     cell_clicked (*data);
 }
 
-template <typename Data_Type, typename Cell_Type>
-void Cell_Base<Data_Type, Cell_Type>::mouseDoubleClick (const juce::MouseEvent&)
+template <typename Cell_Data>
+void Cell_Base<Cell_Data>::mouseDoubleClick (const juce::MouseEvent&)
 {
     if (list->select_on_click)
         select_cell();
@@ -100,7 +104,7 @@ void Cell_Base<Data_Type, Cell_Type>::mouseDoubleClick (const juce::MouseEvent&)
     cell_double_clicked (*data);
 }
 
-template struct Cell_Base<library::Song, Song_Cell>;
-template struct Cell_Base<library::Album, Album_Cell>;
-template struct Cell_Base<library::Artist, Artist_Cell>;
+template struct Cell_Base<library::Song>;
+template struct Cell_Base<library::Album>;
+template struct Cell_Base<library::Artist>;
 } // namespace chow_tunes::gui

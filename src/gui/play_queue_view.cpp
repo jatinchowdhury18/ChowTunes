@@ -10,14 +10,17 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
     queue_change_callback = play_queue.queue_changed.connect (
         [this]
         {
-            queue_list.cells.clear();
+            queue_list.cell_entries.clear();
+            queue_list.cell_components.clear();
             for (auto [idx, song] : chowdsp::enumerate (play_queue.queue))
             {
-                auto& new_cell = queue_list.cells.emplace_back (std::make_unique<gui::Song_Cell>());
-                new_cell->data = song;
-                new_cell->label_text = new_cell->data->name;
-                new_cell->setWantsKeyboardFocus (true);
-                new_cell->cell_right_clicked = [this, i = idx] (const library::Song& selected_song)
+                auto& new_cell_entry = queue_list.cell_entries.emplace_back();
+                new_cell_entry.data = song;
+
+                auto& new_cell_component = queue_list.cell_components.emplace_back();
+                new_cell_component.emplace();
+                new_cell_component->label_text = new_cell_entry.data->name;
+                new_cell_component->cell_right_clicked = [this, i = idx] (const library::Song& selected_song)
                 {
                     juce::PopupMenu menu;
 
@@ -48,9 +51,9 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                     menu.showMenuAsync (juce::PopupMenu::Options{});
                 };
 
-                queue_list.add_cell (*new_cell);
+                queue_list.add_cell (new_cell_entry, *new_cell_component);
                 if ((int) idx == play_queue.currently_playing_song_index)
-                    new_cell->select_cell();
+                    new_cell_component->select_cell();
             }
             queue_list.update_size();
         });

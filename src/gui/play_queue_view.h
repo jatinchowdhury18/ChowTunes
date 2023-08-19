@@ -14,7 +14,7 @@ struct Play_Queue_View : juce::Viewport
     void resized() override;
 
     play_queue::Play_Queue& play_queue;
-    List_Selector<Song_Cell> queue_list;
+    List_Selector<library::Song> queue_list;
     chowdsp::ScopedCallback queue_change_callback;
 };
 } // namespace chow_tunes::gui

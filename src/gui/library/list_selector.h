@@ -5,13 +5,24 @@
 
 namespace chow_tunes::gui
 {
-template <typename Cell_Type>
+template <typename Cell_Data>
+struct Cell_Component;
+
+template <typename Cell_Data>
 struct List_Selector : juce::Viewport
 {
+    using Cell_Component = Cell_Component<Cell_Data>;
+
+    struct Cell_Entry
+    {
+        const Cell_Data* data = nullptr;
+        size_t component_id = 0;
+    };
+
     List_Selector();
 
     void update_size();
-    void add_cell (Cell_Type& cell);
+    void add_cell (Cell_Entry& entry, Cell_Component& cell);
 
     void resized() override;
     void clear_selection();
@@ -22,17 +33,17 @@ struct List_Selector : juce::Viewport
         void resized() override;
     } internal;
 
-    using Cell_List = std::vector<std::unique_ptr<Cell_Type>>;
-    Cell_List cells;
+    std::vector<Cell_Entry> cell_entries;
+    std::vector<chowdsp::LocalPointer<Cell_Component, 800>> cell_components;
 
     bool select_on_click = true;
 };
 
-template <typename Data_Type, typename Cell_Type>
+template <typename Data_Type>
 struct Cell_Base : juce::Component
 {
     const Data_Type* data = nullptr;
-    List_Selector<Cell_Type>* list = nullptr;
+    List_Selector<Data_Type>* list = nullptr;
     bool is_selected = false;
     std::string_view label_text {};
 
@@ -47,13 +58,18 @@ struct Cell_Base : juce::Component
     void mouseDoubleClick (const juce::MouseEvent&) override;
 };
 
-struct Song_Cell : Cell_Base<library::Song, Song_Cell>
+template <>
+struct Cell_Component<library::Song> : Cell_Base<library::Song>
 {
 };
-struct Album_Cell : Cell_Base<library::Album, Album_Cell>
+
+template <>
+struct Cell_Component<library::Album> : Cell_Base<library::Album>
 {
 };
-struct Artist_Cell : Cell_Base<library::Artist, Artist_Cell>
+
+template <>
+struct Cell_Component<library::Artist> : Cell_Base<library::Artist>
 {
 };
 } // namespace chow_tunes::gui
