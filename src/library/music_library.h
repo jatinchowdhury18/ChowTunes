@@ -30,7 +30,7 @@ struct Song
     std::string_view name {};
     size_t artist_id {};
     size_t album_id {};
-    std::string_view filepath {};
+    std::u8string_view filepath {};
     int track_number = -1; // starts indexing at 0, -1 is "invalid"
     // artwork
 };
