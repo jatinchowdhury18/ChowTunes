@@ -8,7 +8,6 @@ template <typename Cell_Data>
 List_Selector<Cell_Data>::List_Selector()
 {
     cell_entries.reserve (100);
-    cell_components.reserve (100);
     internal.parent = this;
     setViewedComponent (&internal, false);
 }
@@ -24,12 +23,12 @@ void List_Selector<Cell_Data>::update_size()
 }
 
 template <typename Cell_Data>
-void List_Selector<Cell_Data>::add_cell (Cell_Entry& entry, Cell_Component& cell)
+void List_Selector<Cell_Data>::add_cell (Cell_Entry& entry, Cell_Locator locator, Cell_Component* cell)
 {
-    cell.list = this;
-    cell.data = entry.data;
+    cell->list = this;
+    cell->data = entry.data;
     internal.addAndMakeVisible (cell);
-    entry.component_id = cell_components.size() - 1;
+    entry.component_locator = locator;
     jassert (cell_components[entry.component_id].get() == &cell);
 }
 
@@ -42,15 +41,21 @@ void List_Selector<Cell_Data>::resized()
 template <typename Cell_Data>
 void List_Selector<Cell_Data>::clear_selection()
 {
-    for (auto& cell : cell_components)
-        cell->is_selected = false;
+    for (auto& cell : cell_entries)
+    {
+        auto& cell_component = *cell_components.find (cell.component_locator);
+        cell_component->is_selected = false;
+    }
 }
 
 template <typename Cell_Data>
 void List_Selector<Cell_Data>::List_Selector_Internal::resized()
 {
     for (auto [idx, cell] : chowdsp::enumerate (parent->cell_entries))
-        parent->cell_components[cell.component_id]->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
+    {
+        auto& cell_component = *parent->cell_components.find (cell.component_locator);
+        cell_component->setBounds (0, (int) idx * cell_height, getWidth(), cell_height);
+    }
 }
 
 template struct List_Selector<library::Song>;

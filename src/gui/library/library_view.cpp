@@ -52,14 +52,14 @@ static auto get_album_songs (const library::Album& album, const library::Music_L
 void Library_View::load_song_list (std::span<const size_t> song_ids)
 {
     song_list.cell_entries.clear();
-    song_list.cell_components.clear();
+    song_list.cell_components.reset();
     for (auto song_id : song_ids)
     {
         auto& new_cell_entry = song_list.cell_entries.emplace_back();
         new_cell_entry.data = &library.songs[song_id];
 
-        auto& new_cell_component = song_list.cell_components.emplace_back();
-        new_cell_component.emplace();
+        auto [new_cell_locator, new_cell_ptr] = song_list.cell_components.emplace();
+        auto* new_cell_component = new_cell_ptr->emplace();
         new_cell_component->label_text = new_cell_entry.data->name;
         new_cell_component->cell_double_clicked = [this] (const library::Song& selected_song)
         {
@@ -73,7 +73,7 @@ void Library_View::load_song_list (std::span<const size_t> song_ids)
                              { return std::array<const library::Song*, 1> { &selected_song }; });
             menu.showMenuAsync (juce::PopupMenu::Options {});
         };
-        song_list.add_cell (new_cell_entry, *new_cell_component);
+        song_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
     std::sort (song_list.cell_entries.begin(), song_list.cell_entries.end(), [] (auto& song_cell1, auto& song_cell2)
                { return song_cell1.data->track_number < song_cell2.data->track_number; });
@@ -83,14 +83,14 @@ void Library_View::load_song_list (std::span<const size_t> song_ids)
 void Library_View::load_album_list (std::span<const size_t> album_ids)
 {
     album_list.cell_entries.clear();
-    album_list.cell_components.clear();
+    album_list.cell_components.reset();
     for (auto album_id : album_ids)
     {
         auto& new_cell_entry = album_list.cell_entries.emplace_back();
         new_cell_entry.data = &library.albums[album_id];
 
-        auto& new_cell_component = album_list.cell_components.emplace_back();
-        new_cell_component.emplace();
+        auto [new_cell_locator, new_cell_ptr] = album_list.cell_components.emplace();
+        auto* new_cell_component = new_cell_ptr->emplace();
         new_cell_component->label_text = new_cell_entry.data->name;
         new_cell_component->cell_clicked = [this] (const library::Album& album_selected)
         {
@@ -112,7 +112,7 @@ void Library_View::load_album_list (std::span<const size_t> album_ids)
                              { return get_album_songs (album_selected, library); });
             menu.showMenuAsync (juce::PopupMenu::Options {});
         };
-        album_list.add_cell (new_cell_entry, *new_cell_component);
+        album_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
     // @TODO: maybe we should sort by year instead?
     std::sort (album_list.cell_entries.begin(), album_list.cell_entries.end(), [] (auto& album_cell1, auto& album_cell2)
@@ -123,21 +123,21 @@ void Library_View::load_album_list (std::span<const size_t> album_ids)
 void Library_View::load_artist_list (std::span<const library::Artist> artists)
 {
     artist_list.cell_entries.clear();
-    artist_list.cell_components.clear();
+    artist_list.cell_components.reset();
     for (const auto& artist : artists)
     {
         auto& new_cell_entry = artist_list.cell_entries.emplace_back();
         new_cell_entry.data = &artist;
 
-        auto& new_cell_component = artist_list.cell_components.emplace_back();
-        new_cell_component.emplace();
+        auto [new_cell_locator, new_cell_ptr] = artist_list.cell_components.emplace();
+        auto* new_cell_component = new_cell_ptr->emplace();
         new_cell_component->label_text = new_cell_entry.data->name;
         new_cell_component->cell_clicked = [this] (const library::Artist& artist_selected)
         {
             load_song_list ({});
             load_album_list (artist_selected.album_ids);
         };
-        artist_list.add_cell (new_cell_entry, *new_cell_component);
+        artist_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
     std::sort (artist_list.cell_entries.begin(), artist_list.cell_entries.end(), [] (auto& artist_cell1, auto& artist_cell2)
                { return artist_cell1.data->name < artist_cell2.data->name; });
@@ -151,11 +151,6 @@ Library_View::Library_View (const library::Music_Library& lib, play_queue::Play_
     addAndMakeVisible (song_list);
     addAndMakeVisible (album_list);
     addAndMakeVisible (artist_list);
-
-    song_list.cell_entries.reserve (1000);
-    song_list.cell_components.reserve (1000);
-    artist_list.cell_entries.reserve (1000);
-    artist_list.cell_components.reserve (1000);
 
     load_artist_list (library.artists);
 }

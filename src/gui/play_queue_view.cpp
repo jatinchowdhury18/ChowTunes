@@ -11,14 +11,14 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
         [this]
         {
             queue_list.cell_entries.clear();
-            queue_list.cell_components.clear();
+            queue_list.cell_components.reset();
             for (auto [idx, song] : chowdsp::enumerate (play_queue.queue))
             {
                 auto& new_cell_entry = queue_list.cell_entries.emplace_back();
                 new_cell_entry.data = song;
 
-                auto& new_cell_component = queue_list.cell_components.emplace_back();
-                new_cell_component.emplace();
+                auto [new_cell_locator, new_cell_ptr] = queue_list.cell_components.emplace();
+                auto* new_cell_component = new_cell_ptr->emplace();
                 new_cell_component->label_text = new_cell_entry.data->name;
                 new_cell_component->cell_right_clicked = [this, i = idx] (const library::Song& selected_song)
                 {
@@ -51,7 +51,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                     menu.showMenuAsync (juce::PopupMenu::Options{});
                 };
 
-                queue_list.add_cell (new_cell_entry, *new_cell_component);
+                queue_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
                 if ((int) idx == play_queue.currently_playing_song_index)
                     new_cell_component->select_cell();
             }

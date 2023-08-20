@@ -12,17 +12,19 @@ template <typename Cell_Data>
 struct List_Selector : juce::Viewport
 {
     using Cell_Component = Cell_Component<Cell_Data>;
+    using Cell_Component_Array = chowdsp::BucketArray<chowdsp::LocalPointer<Cell_Component, 800>, 100>;
+    using Cell_Locator = typename Cell_Component_Array::BucketLocator;
 
     struct Cell_Entry
     {
         const Cell_Data* data = nullptr;
-        size_t component_id = 0;
+        Cell_Locator component_locator;
     };
 
     List_Selector();
 
     void update_size();
-    void add_cell (Cell_Entry& entry, Cell_Component& cell);
+    void add_cell (Cell_Entry& entry, Cell_Locator cell_locator, Cell_Component* cell);
 
     void resized() override;
     void clear_selection();
@@ -34,7 +36,7 @@ struct List_Selector : juce::Viewport
     } internal;
 
     std::vector<Cell_Entry> cell_entries;
-    std::vector<chowdsp::LocalPointer<Cell_Component, 800>> cell_components;
+    Cell_Component_Array cell_components;
 
     bool select_on_click = true;
 };
