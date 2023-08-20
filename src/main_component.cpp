@@ -4,7 +4,7 @@ namespace chow_tunes
 {
 Main_Component::Main_Component()
 {
-    juce::Logger::writeToLog (chow_tunes::library::print_library (library));
+//    juce::Logger::writeToLog (chow_tunes::library::print_library (library));
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 

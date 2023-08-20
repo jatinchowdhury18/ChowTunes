@@ -12,18 +12,7 @@ JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarat
 
 namespace chow_tunes::library
 {
-[[maybe_unused]] static std::string_view to_string_view (const TagLib::String& str)
-{
-    return { str.toCString(), (size_t) str.size() };
-}
-
-[[maybe_unused]] static std::u8string_view to_u8string_view (const TagLib::String& str)
-{
-    const auto str_bytes = str.data (TagLib::String::Type::UTF8);
-    return { (const char8_t*) str_bytes.data(), (size_t) str_bytes.size() };
-}
-
-template <typename IntType>
+m "template <typename IntType>
 std::string_view temp_string (chowdsp::StackAllocator& alloc, const char* data, IntType count)
 {
     auto* t_data = alloc.allocate<char> (count);
@@ -139,9 +128,12 @@ Music_Library index_directory (const std::filesystem::path& path)
             continue;
         }
 
-        const auto title_str = to_u8string_view (tag->title());
-        const auto album_str = to_u8string_view (tag->album());
-        const auto artist_str = to_u8string_view (tag->artist());
+        const auto title_str_data = tag->title().data (TagLib::String::UTF8);
+        const auto title_str = std::u8string_view { (const char8_t*) title_str_data.data(), (size_t) title_str_data.size() };
+        const auto album_str_data = tag->album().data (TagLib::String::UTF8);
+        const auto album_str = std::u8string_view { (const char8_t*) album_str_data.data(), (size_t) album_str_data.size() };
+        const auto artist_str_data = tag->artist().data (TagLib::String::UTF8);
+        const auto artist_str = std::u8string_view { (const char8_t*) artist_str_data.data(), (size_t) artist_str_data.size() };
 
         if (title_str.empty() || album_str.empty() || artist_str.empty())
             continue; // @TODO: figure out what's going on here!

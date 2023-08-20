@@ -29,7 +29,6 @@ void List_Selector<Cell_Data>::add_cell (Cell_Entry& entry, Cell_Locator locator
     cell->data = entry.data;
     internal.addAndMakeVisible (cell);
     entry.component_locator = locator;
-    jassert (cell_components[entry.component_id].get() == &cell);
 }
 
 template <typename Cell_Data>
@@ -72,7 +71,7 @@ void Cell_Base<Cell_Data>::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
 
-    const auto text_str = juce::String::fromUTF8 ((const char*) label_text.data(), label_text.size());
+    const auto text_str = juce::String::fromUTF8 ((const char*) label_text.data(), (int) label_text.size());
     g.drawFittedText (text_str, getLocalBounds(), juce::Justification::centredLeft, 1);
 }
 
