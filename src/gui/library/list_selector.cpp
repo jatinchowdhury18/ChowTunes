@@ -66,7 +66,9 @@ void Cell_Base<Cell_Data>::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
-    g.drawFittedText (chowdsp::toString (label_text), getLocalBounds(), juce::Justification::centredLeft, 1);
+
+    const auto text_str = juce::String::fromUTF8 ((const char*) label_text.data(), label_text.size());
+    g.drawFittedText (text_str, getLocalBounds(), juce::Justification::centredLeft, 1);
 }
 
 template <typename Cell_Data>

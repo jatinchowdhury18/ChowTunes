@@ -11,7 +11,7 @@ struct Album;
 
 struct Artist
 {
-    std::string_view name {};
+    std::u8string_view name {};
     chowdsp::SmallVector<size_t, 10> album_ids {};
     // std::span<Song> loose_songs {};
     // artwork
@@ -19,7 +19,7 @@ struct Artist
 
 struct Album
 {
-    std::string_view name {};
+    std::u8string_view name {};
     chowdsp::SmallVector<size_t, 20> song_ids {};
     size_t artist_id {};
     // artwork
@@ -27,7 +27,7 @@ struct Album
 
 struct Song
 {
-    std::string_view name {};
+    std::u8string_view name {};
     size_t artist_id {};
     size_t album_id {};
     std::u8string_view filepath {};

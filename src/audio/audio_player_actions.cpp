@@ -10,7 +10,7 @@ namespace chow_tunes::audio
 Audio_Player_Action create_play_song_action (const library::Song& song)
 {
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
-    auto [buffer, fs] = audio_file_helper->loadFile (juce::File { juce::String { (const char*) song.filepath.data(), song.filepath.size() } });
+    auto [buffer, fs] = audio_file_helper->loadFile (juce::File { juce::String::fromUTF8 ((const char*) song.filepath.data(), song.filepath.size()) });
     if (buffer.getNumSamples() == 0)
     {
         jassertfalse;

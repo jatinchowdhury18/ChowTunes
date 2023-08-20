@@ -93,7 +93,7 @@ public:
                 auto music_library = chow_tunes::library::index_directory (args[(int) idx + 1].toStdString().c_str());
                 const auto duration = chrono::high_resolution_clock::now() - start;
 
-                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
+//                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
                 std::printf ("Scanned %d songs, from %d albums, from %d artists, in %d milliseconds\n",
                              (int) music_library.songs.size(),
                              (int) music_library.albums.size(),

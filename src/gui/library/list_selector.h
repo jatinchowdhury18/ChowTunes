@@ -45,7 +45,7 @@ struct Cell_Base : juce::Component
     const Data_Type* data = nullptr;
     List_Selector<Data_Type>* list = nullptr;
     bool is_selected = false;
-    std::string_view label_text {};
+    std::u8string_view label_text {};
 
     std::function<void (const Data_Type&)> cell_clicked = [] (const Data_Type&) {};
     std::function<void (const Data_Type&)> cell_right_clicked = [] (const Data_Type&) {};
