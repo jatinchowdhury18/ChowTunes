@@ -1,6 +1,7 @@
 #include "transport_view.h"
 #include "audio/audio_player.h"
 #include "audio/audio_player_actions.h"
+#include "gui/gui_resources.h"
 #include "play_queue/play_queue.h"
 
 namespace chow_tunes::gui
@@ -48,8 +49,44 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
         pause_button.setEnabled (play_state == Play_State::Playing);
     };
 
+    const auto load_fallback_artwork = [this]
+    {
+        const auto fs = cmrc::gui::get_filesystem();
+        const auto icon_file = fs.open ("icon.png");
+        song_artwork = juce::ImageCache::getFromMemory (icon_file.begin(), (int) icon_file.size());
+    };
+
+    const auto update_artwork = [this, load_fallback_artwork, &play_queue = action_router.play_queue]
+    {
+        const auto defer_paint = chowdsp::EndOfScopeAction { [this] { repaint(); } };
+
+        if (play_queue.currently_playing_song_index == -1)
+        {
+            load_fallback_artwork();
+            return;
+        }
+
+        const auto* song = play_queue.queue[(size_t) play_queue.currently_playing_song_index];
+        if (song->artwork_file.empty())
+        {
+            load_fallback_artwork();
+            return;
+        }
+
+        const auto artwork_path_str = juce::String::fromUTF8 ((const char*) song->artwork_file.data(), (int) song->artwork_file.size());
+        song_artwork = juce::ImageCache::getFromFile (juce::File { artwork_path_str });
+
+        if (song_artwork.isNull())
+            load_fallback_artwork();
+    };
+
     button_change_callbacks += {
-        action_router.play_queue.queue_changed.connect (update_button_states),
+        action_router.play_queue.queue_changed.connect (
+            [update_button_states, update_artwork]
+            {
+                update_button_states();
+                update_artwork();
+            }),
         action_router.play_state_changed.connect (update_button_states),
     };
     update_button_states();
@@ -64,6 +101,8 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
         player.volume_db.store ((float) volume_slider.getValue());
     };
     addAndMakeVisible (volume_slider);
+
+    load_fallback_artwork();
 }
 
 void Transport_View::resized()
@@ -75,5 +114,11 @@ void Transport_View::resized()
     pause_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     next_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     volume_slider.setBounds (bounds.removeFromLeft (200).withHeight (50).reduced (5));
+}
+
+void Transport_View::paint (juce::Graphics& g)
+{
+    const auto artwork_bounds = getLocalBounds().removeFromRight (getHeight());
+    g.drawImage (song_artwork, artwork_bounds.toFloat());
 }
 } // namespace chow_tunes::gui

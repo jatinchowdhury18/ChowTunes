@@ -43,6 +43,7 @@ CPMAddPackage(
 
 juce_add_gui_app(ChowTunes
     PRODUCT_NAME "ChowTunes"
+    ICON_SMALL res/icon.png
 )
 
 target_sources(ChowTunes
@@ -62,6 +63,9 @@ target_sources(ChowTunes
         src/gui/transport_view.cpp
 )
 
+include(cmake/CMakeRC.cmake)
+add_subdirectory(res)
+
 target_link_libraries(ChowTunes
     PRIVATE
         juce::juce_audio_utils
@@ -74,6 +78,7 @@ target_link_libraries(ChowTunes
         chowdsp::chowdsp_plugin_utils
         tag
         samplerate
+        chow_tunes::gui-resources
     PUBLIC
         juce::juce_recommended_warning_flags
         juce::juce_recommended_config_flags

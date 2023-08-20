@@ -15,6 +15,7 @@ struct Transport_View : juce::Component
     explicit Transport_View (audio::Audio_Player_Action_Router& action_router);
 
     void resized() override;
+    void paint (juce::Graphics& g) override;
 
     juce::TextButton prev_button { "PREVIOUS" };
     juce::TextButton restart_button { "RESTART" };
@@ -24,5 +25,7 @@ struct Transport_View : juce::Component
     juce::Slider volume_slider;
 
     chowdsp::ScopedCallbackList button_change_callbacks;
+
+    juce::Image song_artwork;
 };
 } // namespace chow_tunes::gui

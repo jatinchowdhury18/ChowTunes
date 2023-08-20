@@ -20,8 +20,6 @@ some "low-hanging" improvements to be had.
 
 - [ ] Make it look (a lot) nicer
 - [ ] Make the music library folder configurable (currently it's hard-coded at compile-time lol)
-- [ ] Show album artwork
-- [ ] Desktop icon
 - [ ] Listen to keypresses (even when minimized/out of focus): play/pause, next/previous song, etc
 - [ ] Allow the user to select their own audio device (currently we're just using the default)
 - [ ] "Timeline" feature

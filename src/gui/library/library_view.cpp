@@ -116,9 +116,8 @@ void Library_View::load_album_list (std::span<const size_t> album_ids)
         };
         album_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
-    // @TODO: maybe we should sort by year instead?
     std::sort (album_list.cell_entries.begin(), album_list.cell_entries.end(), [] (auto& album_cell1, auto& album_cell2)
-               { return album_cell1.data->name < album_cell2.data->name; });
+               { return album_cell1.data->year < album_cell2.data->year; });
     album_list.update_size();
 }
 

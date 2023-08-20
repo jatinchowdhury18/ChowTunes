@@ -2,6 +2,7 @@
 
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations", "-Wdeprecated-dynamic-exception-spec")
 #include <fileref.h>
+#include <tpropertymap.h>
 #include <utf8-cpp/checked.h>
 
 #include "bs_thread_pool.h"
@@ -157,21 +158,17 @@ Music_Library index_directory (const std::filesystem::path& path)
         auto& song_artist = get_artist_for_song (library, song, artist_str);
         auto& song_album = get_album_for_song (library, song, album_str, song_artist);
         song_album.song_ids.push_back (song_id);
+        song_album.year = tag->year();
 
         song.track_number = static_cast<int> (tag->track());
         song.filepath = temp_string (library.stack_data, file_path.u8string());
 
-        //            std::cout << "-- TAG (basic) --" << std::endl;
-        //            std::cout << "title   - \"" << tag->title()   << "\"" << std::endl;
-        //            std::cout << "artist  - \"" << tag->artist()  << "\"" << std::endl;
-        //            std::cout << "album   - \"" << tag->album()   << "\"" << std::endl;
-        //            std::cout << "year    - \"" << tag->year()    << "\"" << std::endl;
-        //            std::cout << "comment - \"" << tag->comment() << "\"" << std::endl;
-        //            std::cout << "track   - \"" << tag->track()   << "\"" << std::endl;
-        //            std::cout << "genre   - \"" << tag->genre()   << "\"" << std::endl;
+        const auto potential_artwork_file = file_path.parent_path() / "cover.jpg";
+        if (std::filesystem::exists(potential_artwork_file))
+            song.artwork_file = temp_string (library.stack_data, potential_artwork_file.u8string());
     }
 
-//    std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
+    //    std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
 
     return library;
 }

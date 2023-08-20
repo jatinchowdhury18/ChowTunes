@@ -1,8 +1,9 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
 #include <chrono>
 
-#include "main_component.h"
 #include "library/music_library.h"
+#include "main_component.h"
+#include "gui/gui_resources.h"
 
 class ChowTunesApplication : public juce::JUCEApplication
 {
@@ -27,9 +28,12 @@ public:
 
             juce::Component::setVisible (true);
 
-            //            Image icon = ImageCache::getFromMemory (BinaryData::logo_256_png, BinaryData::logo_256_pngSize);
-            //            setIcon (icon);
-            //            getPeer()->setIcon (icon);
+            const auto fs = cmrc::gui::get_filesystem();
+            const auto icon_file = fs.open ("icon.png");
+            const auto icon = juce::ImageCache::getFromMemory (icon_file.begin(), (int) icon_file.size());
+
+            setIcon (icon);
+            getPeer()->setIcon (icon);
         }
 
         void closeButtonPressed() override
@@ -93,12 +97,12 @@ public:
                 auto music_library = chow_tunes::library::index_directory (args[(int) idx + 1].toStdString().c_str());
                 const auto duration = chrono::high_resolution_clock::now() - start;
 
-//                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
+                //                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
                 std::printf ("Scanned %d songs, from %d albums, from %d artists, in %d milliseconds\n",
                              (int) music_library.songs.size(),
                              (int) music_library.albums.size(),
                              (int) music_library.artists.size(),
-                             (int) chrono::duration_cast<chrono::milliseconds>(duration).count());
+                             (int) chrono::duration_cast<chrono::milliseconds> (duration).count());
 
                 return true;
             }
