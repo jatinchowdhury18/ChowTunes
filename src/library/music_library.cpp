@@ -1,18 +1,34 @@
 #include "music_library.h"
 
-#if JUCE_WINDOWS
-#include <codecvt>
-#endif
-
-JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations")
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations", "-Wdeprecated-dynamic-exception-spec")
 #include <fileref.h>
-#include <tag.h>
+#include <utf8-cpp/checked.h>
 
 #include "bs_thread_pool.h"
 
 namespace chow_tunes::library
 {
-m "template <typename IntType>
+static std::u8string_view to_u8string_view (chowdsp::StackAllocator& alloc, const TagLib::String& str)
+{
+    const auto str_view_start = alloc.data<char8_t> (alloc.get_bytes_used());
+    char8_t* str_view_end = nullptr;
+    try
+    {
+        str_view_end = utf8::utf16to8 (str.begin(), str.end(), str_view_start);
+    }
+    catch ([[maybe_unused]] const utf8::exception& e)
+    {
+        DBG (e.what());
+        return {};
+    }
+
+    const auto str_view_length = std::distance (str_view_start, str_view_end);
+    [[maybe_unused]] const auto start_ptr = alloc.allocate<char8_t> (str_view_length);
+    jassert (start_ptr != nullptr);
+    return { str_view_start, static_cast<size_t> (str_view_length) };
+}
+
+template <typename IntType>
 std::string_view temp_string (chowdsp::StackAllocator& alloc, const char* data, IntType count)
 {
     auto* t_data = alloc.allocate<char> (count);
@@ -54,7 +70,7 @@ static Artist& get_artist_for_song (Music_Library& library, Song& song, std::u8s
 
     song.artist_id = library.artists.size();
     auto& song_artist = library.artists.emplace_back();
-    song_artist.name = temp_string (library.stack_data, artist_name);
+    song_artist.name = artist_name;
     return song_artist;
 }
 
@@ -72,7 +88,7 @@ static Album& get_album_for_song (Music_Library& library, Song& song, std::u8str
 
     song.album_id = library.albums.size();
     auto& song_album = library.albums.emplace_back();
-    song_album.name = temp_string (library.stack_data, album_name);
+    song_album.name = album_name;
     song_album.artist_id = song.artist_id;
 
     if (std::find (artist.album_ids.begin(), artist.album_ids.end(), song.album_id) == artist.album_ids.end())
@@ -100,7 +116,7 @@ Music_Library index_directory (const std::filesystem::path& path)
     std::vector<std::future<Tag_Result>> tag_results;
     tag_results.reserve (10'000);
 
-//    std::printf ("Indexing directory: %ls\n", path.c_str());
+    //    std::printf ("Indexing directory: %ls\n", path.c_str());
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
         //        std::printf ("    Entry: %s\n", dir_entry.path().c_str());
@@ -128,19 +144,15 @@ Music_Library index_directory (const std::filesystem::path& path)
             continue;
         }
 
-        const auto title_str_data = tag->title().data (TagLib::String::UTF8);
-        const auto title_str = std::u8string_view { (const char8_t*) title_str_data.data(), (size_t) title_str_data.size() };
-        const auto album_str_data = tag->album().data (TagLib::String::UTF8);
-        const auto album_str = std::u8string_view { (const char8_t*) album_str_data.data(), (size_t) album_str_data.size() };
-        const auto artist_str_data = tag->artist().data (TagLib::String::UTF8);
-        const auto artist_str = std::u8string_view { (const char8_t*) artist_str_data.data(), (size_t) artist_str_data.size() };
-
+        const auto title_str = to_u8string_view (library.stack_data, tag->title());
+        const auto album_str = to_u8string_view (library.stack_data, tag->album());
+        const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
         if (title_str.empty() || album_str.empty() || artist_str.empty())
             continue; // @TODO: figure out what's going on here!
 
         const auto song_id = library.songs.size();
         auto& song = library.songs.emplace_back();
-        song.name = temp_string (library.stack_data, title_str);
+        song.name = title_str;
 
         auto& song_artist = get_artist_for_song (library, song, artist_str);
         auto& song_album = get_album_for_song (library, song, album_str, song_artist);

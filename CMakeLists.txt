@@ -99,6 +99,7 @@ target_include_directories(ChowTunes
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v1
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v2
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v2/frames
+        ${taglib_SOURCE_DIR}/3rdparty
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
