@@ -21,36 +21,50 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                 auto [new_cell_locator, new_cell_ptr] = queue_list.cell_components.emplace();
                 auto* new_cell_component = new_cell_ptr->emplace();
                 new_cell_component->label_text = new_cell_entry.data->name;
-                new_cell_component->cell_right_clicked = [this, i = idx] (const library::Song& selected_song)
+                if (play_queue.currently_playing_song_index != (int) idx)
                 {
-                    juce::PopupMenu menu;
-
-                    if (i > 0)
+                    new_cell_component->cell_right_clicked = [this, i = idx] (const library::Song& selected_song)
                     {
-                        juce::PopupMenu::Item move_up_item;
-                        move_up_item.text = "Move Up";
-                        move_up_item.itemID = 100;
-                        move_up_item.action = [this, &selected_song]
-                        {
-                            play_queue.move_song_up (&selected_song);
-                        };
-                        menu.addItem (std::move (move_up_item));
-                    }
+                        juce::PopupMenu menu;
 
-                    if (i < play_queue.queue.size() - 1)
-                    {
-                        juce::PopupMenu::Item move_down_item;
-                        move_down_item.text = "Move Down";
-                        move_down_item.itemID = 101;
-                        move_down_item.action = [this, &selected_song]
+                        if (i > 0)
                         {
-                            play_queue.move_song_down (&selected_song);
-                        };
-                        menu.addItem (std::move (move_down_item));
-                    }
+                            juce::PopupMenu::Item move_up_item;
+                            move_up_item.text = "Move Up";
+                            move_up_item.itemID = 100;
+                            move_up_item.action = [this, &selected_song]
+                            {
+                                play_queue.move_song_up (&selected_song);
+                            };
+                            menu.addItem (std::move (move_up_item));
+                        }
 
-                    menu.showMenuAsync (juce::PopupMenu::Options{});
-                };
+                        if (i < play_queue.queue.size() - 1)
+                        {
+                            juce::PopupMenu::Item move_down_item;
+                            move_down_item.text = "Move Down";
+                            move_down_item.itemID = 101;
+                            move_down_item.action = [this, &selected_song]
+                            {
+                                play_queue.move_song_down (&selected_song);
+                            };
+                            menu.addItem (std::move (move_down_item));
+                        }
+
+                        {
+                            juce::PopupMenu::Item remove_item;
+                            remove_item.text = "Remove";
+                            remove_item.itemID = 103;
+                            remove_item.action = [this, song_idx = i]
+                            {
+                                play_queue.remove_song ((size_t) song_idx);
+                            };
+                            menu.addItem (std::move (remove_item));
+                        }
+
+                        menu.showMenuAsync (juce::PopupMenu::Options {});
+                    };
+                }
 
                 queue_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
                 if ((int) idx == play_queue.currently_playing_song_index)

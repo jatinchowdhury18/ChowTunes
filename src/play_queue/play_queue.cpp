@@ -86,4 +86,10 @@ void Play_Queue::move_song_down (const library::Song* song)
     std::rotate (song_iter, song_iter + 1, song_iter + 2);
     queue_changed();
 }
+
+void Play_Queue::remove_song (size_t song_idx)
+{
+    queue.erase (queue.begin() + (int) song_idx);
+    queue_changed();
+}
 } // namespace chow_tunes::play_queue
