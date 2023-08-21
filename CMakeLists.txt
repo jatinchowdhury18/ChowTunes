@@ -50,6 +50,7 @@ target_sources(ChowTunes
     PRIVATE
         src/main.cpp
         src/main_component.cpp
+        src/state.cpp
 
         src/library/music_library.cpp
         src/play_queue/play_queue.cpp
@@ -77,6 +78,7 @@ target_link_libraries(ChowTunes
         chowdsp::chowdsp_dsp_utils
         chowdsp::chowdsp_sources
         chowdsp::chowdsp_plugin_utils
+        chowdsp::chowdsp_plugin_state
         tag
         samplerate
         chow_tunes::gui-resources

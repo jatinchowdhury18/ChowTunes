@@ -4,7 +4,6 @@ namespace chow_tunes
 {
 Main_Component::Main_Component()
 {
-//    juce::Logger::writeToLog (chow_tunes::library::print_library (library));
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 
@@ -16,6 +15,24 @@ Main_Component::Main_Component()
 
     startTimer (5);
     setSize (1250, 750);
+
+    app_state.load_state (*this);
+    if (app_state.library_filepath.get().empty())
+    {
+        file_chooser = std::make_shared<juce::FileChooser> ("Choose library folder");
+        file_chooser->launchAsync (juce::FileBrowserComponent::canSelectDirectories,
+                                   [this] (const juce::FileChooser& fc)
+                                   {
+                                       if (fc.getResults().isEmpty())
+                                           return;
+                                       app_state.library_filepath = fc.getResult().getFullPathName().toStdString();
+                                   });
+    }
+}
+
+Main_Component::~Main_Component()
+{
+    app_state.save_state();
 }
 
 void Main_Component::paint (juce::Graphics& g)
@@ -39,4 +56,4 @@ void Main_Component::timerCallback()
 
     transport_view.timeline.update();
 }
-}
+} // namespace chow_tunes

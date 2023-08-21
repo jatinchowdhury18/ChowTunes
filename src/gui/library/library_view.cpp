@@ -51,7 +51,7 @@ static auto get_album_songs (const library::Album& album, const library::Music_L
     return album_songs;
 }
 
-void Library_View::load_song_list (std::span<const size_t> song_ids)
+void Library_View::load_song_list (std::span<const size_t> song_ids, const library::Music_Library& library)
 {
     song_list.cell_entries.clear();
     song_list.cell_components.reset();
@@ -82,7 +82,7 @@ void Library_View::load_song_list (std::span<const size_t> song_ids)
     song_list.update_size();
 }
 
-void Library_View::load_album_list (std::span<const size_t> album_ids)
+void Library_View::load_album_list (std::span<const size_t> album_ids, const library::Music_Library& library)
 {
     album_list.cell_entries.clear();
     album_list.cell_components.reset();
@@ -94,23 +94,23 @@ void Library_View::load_album_list (std::span<const size_t> album_ids)
         auto [new_cell_locator, new_cell_ptr] = album_list.cell_components.emplace();
         auto* new_cell_component = new_cell_ptr->emplace();
         new_cell_component->label_text = new_cell_entry.data->name;
-        new_cell_component->cell_clicked = [this] (const library::Album& album_selected)
+        new_cell_component->cell_clicked = [this, &library] (const library::Album& album_selected)
         {
-            load_song_list (album_selected.song_ids);
+            load_song_list (album_selected.song_ids, library);
         };
-        new_cell_component->cell_double_clicked = [this] (const library::Album& album_selected)
+        new_cell_component->cell_double_clicked = [this, &library] (const library::Album& album_selected)
         {
-            load_song_list (album_selected.song_ids);
+            load_song_list (album_selected.song_ids, library);
 
             auto album_songs = get_album_songs (album_selected, library);
             play_queue.add_to_queue (album_songs, Queue_Action::Play_Now);
         };
-        new_cell_component->cell_right_clicked = [this] (const library::Album& album_selected)
+        new_cell_component->cell_right_clicked = [this, &library] (const library::Album& album_selected)
         {
-            load_song_list (album_selected.song_ids);
+            load_song_list (album_selected.song_ids, library);
 
             juce::PopupMenu menu;
-            setup_play_menu (menu, play_queue, [this, &album_selected]
+            setup_play_menu (menu, play_queue, [&library, &album_selected]
                              { return get_album_songs (album_selected, library); });
             menu.showMenuAsync (juce::PopupMenu::Options {});
         };
@@ -121,7 +121,7 @@ void Library_View::load_album_list (std::span<const size_t> album_ids)
     album_list.update_size();
 }
 
-void Library_View::load_artist_list (std::span<const library::Artist> artists)
+void Library_View::load_artist_list (std::span<const library::Artist> artists, const library::Music_Library& library)
 {
     artist_list.cell_entries.clear();
     artist_list.cell_components.reset();
@@ -133,10 +133,10 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists)
         auto [new_cell_locator, new_cell_ptr] = artist_list.cell_components.emplace();
         auto* new_cell_component = new_cell_ptr->emplace();
         new_cell_component->label_text = new_cell_entry.data->name;
-        new_cell_component->cell_clicked = [this] (const library::Artist& artist_selected)
+        new_cell_component->cell_clicked = [this, &library] (const library::Artist& artist_selected)
         {
-            load_song_list ({});
-            load_album_list (artist_selected.album_ids);
+            load_song_list ({}, library);
+            load_album_list (artist_selected.album_ids, library);
         };
         artist_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
@@ -146,14 +146,13 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists)
 }
 
 Library_View::Library_View (const library::Music_Library& lib, play_queue::Play_Queue& _play_queue)
-    : library (lib),
-      play_queue (_play_queue)
+    : play_queue (_play_queue)
 {
     addAndMakeVisible (song_list);
     addAndMakeVisible (album_list);
     addAndMakeVisible (artist_list);
 
-    load_artist_list (library.artists);
+    load_artist_list (lib.artists, lib);
 }
 
 void Library_View::resized()

@@ -10,11 +10,16 @@ namespace chow_tunes::audio
 struct Audio_Player_Action_Router;
 }
 
+namespace chow_tunes::state
+{
+struct State;
+}
+
 namespace chow_tunes::gui
 {
 struct Transport_View : juce::Component
 {
-    explicit Transport_View (audio::Audio_Player_Action_Router& action_router);
+    explicit Transport_View (state::State& app_state, audio::Audio_Player_Action_Router& action_router);
 
     void resized() override;
     void paint (juce::Graphics& g) override;

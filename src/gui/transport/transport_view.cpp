@@ -3,10 +3,11 @@
 #include "audio/audio_player_actions.h"
 #include "gui/gui_resources.h"
 #include "play_queue/play_queue.h"
+#include "state.h"
 
 namespace chow_tunes::gui
 {
-Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router)
+Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Action_Router& action_router)
 {
     addAndMakeVisible (prev_button);
     addAndMakeVisible (restart_button);
@@ -95,10 +96,10 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
     volume_slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 80, 20);
     volume_slider.setTextValueSuffix (" dB");
     volume_slider.setRange ({ audio::Audio_Player::min_gain_db, 6.0 }, 0.1);
-    volume_slider.setValue (action_router.audio_player.volume_db, juce::dontSendNotification);
-    volume_slider.onValueChange = [this, &player = action_router.audio_player]
+    volume_slider.setValue (app_state.volume_db, juce::dontSendNotification);
+    volume_slider.onValueChange = [this, &app_state]
     {
-        player.volume_db.store ((float) volume_slider.getValue());
+        app_state.volume_db = (float) volume_slider.getValue();
     };
     addAndMakeVisible (volume_slider);
 
