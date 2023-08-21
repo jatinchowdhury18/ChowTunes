@@ -54,6 +54,7 @@ static auto get_album_songs (const library::Album& album, const library::Music_L
 void Library_View::load_song_list (std::span<const size_t> song_ids, const library::Music_Library& library)
 {
     song_list.cell_entries.clear();
+    song_list.cell_entries.reserve (song_ids.size());
     song_list.cell_components.reset();
     for (auto song_id : song_ids)
     {
@@ -85,6 +86,7 @@ void Library_View::load_song_list (std::span<const size_t> song_ids, const libra
 void Library_View::load_album_list (std::span<const size_t> album_ids, const library::Music_Library& library)
 {
     album_list.cell_entries.clear();
+    album_list.cell_entries.reserve (album_ids.size());
     album_list.cell_components.reset();
     for (auto album_id : album_ids)
     {
@@ -124,6 +126,7 @@ void Library_View::load_album_list (std::span<const size_t> album_ids, const lib
 void Library_View::load_artist_list (std::span<const library::Artist> artists, const library::Music_Library& library)
 {
     artist_list.cell_entries.clear();
+    artist_list.cell_entries.reserve (artists.size());
     artist_list.cell_components.reset();
     for (const auto& artist : artists)
     {

@@ -7,6 +7,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
 {
     queue_list.select_on_click = false;
     addAndMakeVisible (queue_list);
+    queue_list.cell_entries.reserve (100);
     queue_change_callback = play_queue.queue_changed.connect (
         [this]
         {

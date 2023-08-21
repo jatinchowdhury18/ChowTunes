@@ -7,7 +7,6 @@ static constexpr auto cell_height = 30;
 template <typename Cell_Data>
 List_Selector<Cell_Data>::List_Selector()
 {
-    cell_entries.reserve (100);
     internal.parent = this;
     setViewedComponent (&internal, false);
 }
