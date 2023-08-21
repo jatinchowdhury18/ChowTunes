@@ -3,6 +3,8 @@
 #include <chowdsp_listeners/chowdsp_listeners.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "transport_timeline.h"
+
 namespace chow_tunes::audio
 {
 struct Audio_Player_Action_Router;
@@ -22,9 +24,10 @@ struct Transport_View : juce::Component
     juce::TextButton play_button { "PLAY" };
     juce::TextButton pause_button { "PAUSE" };
     juce::TextButton next_button { "NEXT" };
-    juce::Slider volume_slider;
-
     chowdsp::ScopedCallbackList button_change_callbacks;
+
+    juce::Slider volume_slider;
+    Transport_Timeline timeline;
 
     juce::Image song_artwork;
 };

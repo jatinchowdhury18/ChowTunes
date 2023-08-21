@@ -111,6 +111,7 @@ Music_Library index_directory (const std::filesystem::path& path)
         TagLib::FileRef file;
         const TagLib::Tag* tag = nullptr;
         std::filesystem::path file_path;
+        std::filesystem::path artwork_path;
     };
 
     BS::thread_pool thread_pool {};
@@ -127,10 +128,16 @@ Music_Library index_directory (const std::filesystem::path& path)
                 [file_path = dir_entry.path()]() -> Tag_Result
                 {
                     TagLib::FileRef file { file_path.c_str() };
+
+                    auto potential_artwork_file = file_path.parent_path() / "cover.jpg";
+                    if (! std::filesystem::exists (potential_artwork_file))
+                        potential_artwork_file = std::filesystem::path{};
+
                     return {
                         .file = file,
                         .tag = file.tag(),
                         .file_path = file_path,
+                        .artwork_path = potential_artwork_file,
                     };
                 }));
         }
@@ -138,7 +145,7 @@ Music_Library index_directory (const std::filesystem::path& path)
 
     for (auto& tag_result_future : tag_results)
     {
-        const auto [file, tag, file_path] = tag_result_future.get();
+        const auto [file, tag, file_path, art_path] = tag_result_future.get();
         if (tag == nullptr)
         {
             jassertfalse;
@@ -162,10 +169,7 @@ Music_Library index_directory (const std::filesystem::path& path)
 
         song.track_number = static_cast<int> (tag->track());
         song.filepath = temp_string (library.stack_data, file_path.u8string());
-
-        const auto potential_artwork_file = file_path.parent_path() / "cover.jpg";
-        if (std::filesystem::exists(potential_artwork_file))
-            song.artwork_file = temp_string (library.stack_data, potential_artwork_file.u8string());
+        song.artwork_file = temp_string (library.stack_data, art_path.u8string());
     }
 
     //    std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);

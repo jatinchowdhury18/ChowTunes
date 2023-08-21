@@ -8,7 +8,7 @@
 #include "gui/library/library_view.h"
 #include "gui/library/list_selector.h"
 #include "gui/play_queue_view.h"
-#include "gui/transport_view.h"
+#include "gui/transport/transport_view.h"
 #include "library/music_library.h"
 #include "play_queue/play_queue.h"
 

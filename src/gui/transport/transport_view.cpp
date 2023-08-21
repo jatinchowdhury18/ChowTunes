@@ -103,6 +103,10 @@ Transport_View::Transport_View (audio::Audio_Player_Action_Router& action_router
     addAndMakeVisible (volume_slider);
 
     load_fallback_artwork();
+
+    timeline.action_router = &action_router;
+    timeline.player = &action_router.audio_player;
+    addAndMakeVisible (timeline);
 }
 
 void Transport_View::resized()
@@ -114,6 +118,8 @@ void Transport_View::resized()
     pause_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     next_button.setBounds (bounds.removeFromLeft (80).withHeight (35));
     volume_slider.setBounds (bounds.removeFromLeft (200).withHeight (50).reduced (5));
+
+    timeline.setBounds (0, 60, getWidth() * 2 / 3, 30);
 }
 
 void Transport_View::paint (juce::Graphics& g)

@@ -23,7 +23,7 @@ Audio_Player_Action create_play_song_action (const library::Song& song)
     Audio_Player_Action action;
     action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
     action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
-    action.sample_rate = fs;
+    action.action_value = fs;
     return action;
 }
 
@@ -32,7 +32,7 @@ void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
     using Action_Type = Audio_Player_Action_Type;
     using Play_State = audio::Audio_Player::State;
 
-    if (action.action_type == Action_Type::Start_New_Song)
+    if (action.action_type == Action_Type::Start_New_Song || action.action_type == Action_Type::Move_Playhead)
     {
         audio_player.ui_to_audio_queue.enqueue (std::move (action));
     }

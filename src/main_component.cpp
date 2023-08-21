@@ -36,5 +36,7 @@ void Main_Component::timerCallback()
     audio::Audio_Player_Action action;
     while (audio_player.audio_to_ui_queue.try_dequeue (action))
         action_router.route_action (std::move (action));
+
+    transport_view.timeline.update();
 }
 }

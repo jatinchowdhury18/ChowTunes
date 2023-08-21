@@ -29,6 +29,9 @@ struct Audio_Player : juce::AudioIODeviceCallback
     bool read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept;
     void process_effects (const chowdsp::BufferView<float>& buffer) noexcept;
 
+    double get_song_progress_percent() const noexcept;
+    size_t get_seconds_played() const noexcept;
+
     enum class State
     {
         Playing,
@@ -37,8 +40,9 @@ struct Audio_Player : juce::AudioIODeviceCallback
     };
 
     std::unique_ptr<juce::AudioBuffer<float>> playing_buffer {};
-    double song_sample_rate = 48000.0;
-    int sample_counter = 0;
+    std::atomic<double> song_sample_rate { 48000.0 };
+    std::atomic<int> song_length_samples { 0 };
+    std::atomic<int> sample_counter { 0 };
     std::atomic<State> state { State::Stopped };
 
     juce::AudioDeviceManager audio_device_manager;
@@ -58,7 +62,7 @@ struct Audio_Player : juce::AudioIODeviceCallback
     chowdsp::StaticBuffer<float, 2, 4 * small_block_size> leftover_samples { 2, 4 * small_block_size };
 
     // Effects chain (maybe refactor later)
-    static constexpr auto min_gain_db = -30.0f;
+    static constexpr auto min_gain_db = -60.0f;
     std::atomic<float> volume_db { -6.0f };
     chowdsp::Gain<float> volume_gain;
 };

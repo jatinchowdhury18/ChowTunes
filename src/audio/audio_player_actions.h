@@ -34,13 +34,14 @@ enum class Audio_Player_Action_Type
     Next_Song,
     Song_Finished,
     Dead_Song,
+    Move_Playhead,
 };
 
 struct Audio_Player_Action
 {
     Audio_Player_Action_Type action_type;
     std::unique_ptr<juce::AudioBuffer<float>> audio_buffer;
-    double sample_rate = 0.0;
+    std::variant<double> action_value; // this value will be different depending on the action!
 };
 
 Audio_Player_Action create_play_song_action (const library::Song& song);

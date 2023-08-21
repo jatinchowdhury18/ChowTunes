@@ -22,7 +22,6 @@ some "low-hanging" improvements to be had.
 - [ ] Make the music library folder configurable (currently it's hard-coded at compile-time lol)
 - [ ] Listen to keypresses (even when minimized/out of focus): play/pause, next/previous song, etc
 - [ ] Allow the user to select their own audio device (currently we're just using the default)
-- [ ] "Timeline" feature
 - [ ] Effects
   - [ ] Equalizer
   - [ ] Safety Limiter
@@ -41,7 +40,7 @@ For a long while I've used [Dopamine](https://github.com/digimezzo/dopamine), wh
 treated me quite well. However, I wanted to see if I could make something a little bit
 smaller and simpler that still got me the few features that I want in an audio player.
 
-So far I've spent something like 10 hours working on this. So obviously it's not very polished
+So far I've spent something like 20 hours working on this. So obviously it's not very polished
 and has an extremely minimal feature set, but I think it will get the job done (for now).
 
 ## License
