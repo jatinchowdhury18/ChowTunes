@@ -111,3 +111,17 @@ target_include_directories(ChowTunes
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# @TODO: figure out better "install" paths
+if(WIN32)
+    set(install_dir "C:/Users/$ENV{USERNAME}")
+else()
+    set(install_dir "$ENV{HOME}")
+endif()
+
+add_custom_target(ChowTunes_Install
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS ChowTunes
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying $<TARGET_FILE:ChowTunes> to ${install_dir}"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:ChowTunes>" ${install_dir}
+)
