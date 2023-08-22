@@ -16,5 +16,6 @@ struct Play_Queue_View : juce::Viewport
     play_queue::Play_Queue& play_queue;
     List_Selector<library::Song> queue_list;
     chowdsp::ScopedCallback queue_change_callback;
+    juce::TextButton clear_queue_button { "Clear Queue" };
 };
 } // namespace chow_tunes::gui

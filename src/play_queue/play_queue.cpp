@@ -36,7 +36,6 @@ void Play_Queue::restart_current_song()
     play_song_from_queue (*this, currently_playing_song_index);
 }
 
-
 void Play_Queue::add_to_queue (std::span<const library::Song*> songs_to_add, Add_To_Queue_Action action)
 {
     if (action == Add_To_Queue_Action::Play_Now || queue.empty())
@@ -90,6 +89,14 @@ void Play_Queue::move_song_down (const library::Song* song)
 void Play_Queue::remove_song (size_t song_idx)
 {
     queue.erase (queue.begin() + (int) song_idx);
+    queue_changed();
+}
+
+void Play_Queue::clear_queue()
+{
+    action_router->route_action ({ .action_type = audio::Audio_Player_Action_Type::Stop_Song });
+    currently_playing_song_index = -1;
+    queue.clear();
     queue_changed();
 }
 } // namespace chow_tunes::play_queue

@@ -19,7 +19,10 @@ void Transport_Timeline::update()
 
     const auto compare_exchange = [] (auto& val, auto compare_val)
     {
+        JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-equal")
         const auto result = val != compare_val;
+        JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+
         val = compare_val;
         return result;
     };

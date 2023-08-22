@@ -29,6 +29,7 @@ enum class Audio_Player_Action_Type
     Start_New_Song,
     Play_Song,
     Pause_Song,
+    Stop_Song,
     Restart_Song,
     Previous_Song,
     Next_Song,

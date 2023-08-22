@@ -30,5 +30,6 @@ struct Play_Queue
     void move_song_up (const library::Song* song);
     void move_song_down (const library::Song* song);
     void remove_song (size_t song_idx);
+    void clear_queue();
 };
 } // namespace chow_tunes::play_queue

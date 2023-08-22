@@ -73,6 +73,19 @@ void Audio_Player::handle_incoming_messages()
             const auto new_play_percent = std::get<double> (action.action_value);
             sample_counter.store (juce::roundToIntAccurate (new_play_percent * (double) song_length_samples.load()));
         }
+        else if (action.action_type == Audio_Player_Action_Type::Stop_Song)
+        {
+            playing_buffer.swap (action.audio_buffer);
+            action.action_type = Audio_Player_Action_Type::Dead_Song;
+            audio_to_ui_queue.try_enqueue (std::move (action));
+
+            sample_counter.store (0);
+            song_length_samples.store (0);
+            state.store (State::Stopped);
+
+            for (auto& resampler : resamplers)
+                src_reset (resampler.get());
+        }
     }
 
     // If this is false, then we will have a de-allocation here, which would be bad!!

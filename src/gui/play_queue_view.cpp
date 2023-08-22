@@ -5,6 +5,12 @@ namespace chow_tunes::gui
 Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
     : play_queue (queue)
 {
+    clear_queue_button.onClick = [&queue]
+    {
+        queue.clear_queue();
+    };
+    addAndMakeVisible (clear_queue_button);
+
     queue_list.select_on_click = false;
     addAndMakeVisible (queue_list);
     queue_list.cell_entries.reserve (100);
@@ -76,6 +82,8 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
 
 void Play_Queue_View::resized()
 {
-    queue_list.setBounds (getLocalBounds());
+    auto bounds = getLocalBounds();
+    clear_queue_button.setBounds (bounds.removeFromBottom (30));
+    queue_list.setBounds (bounds);
 }
 } // namespace chow_tunes::gui
