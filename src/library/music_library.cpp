@@ -122,7 +122,9 @@ Music_Library index_directory (const std::filesystem::path& path)
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
         //        std::printf ("    Entry: %s\n", dir_entry.path().c_str());
-        if (dir_entry.is_regular_file() && dir_entry.path().extension() == ".mp3")
+        const auto extension = dir_entry.path().extension();
+        if (dir_entry.is_regular_file()
+            && (extension == ".mp3" || extension == ".flac"))
         {
             tag_results.push_back (thread_pool.submit (
                 [file_path = dir_entry.path()]() -> Tag_Result
@@ -131,7 +133,7 @@ Music_Library index_directory (const std::filesystem::path& path)
 
                     auto potential_artwork_file = file_path.parent_path() / "cover.jpg";
                     if (! std::filesystem::exists (potential_artwork_file))
-                        potential_artwork_file = std::filesystem::path{};
+                        potential_artwork_file = std::filesystem::path {};
 
                     return {
                         .file = file,
@@ -156,7 +158,10 @@ Music_Library index_directory (const std::filesystem::path& path)
         const auto album_str = to_u8string_view (library.stack_data, tag->album());
         const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
         if (title_str.empty() || album_str.empty() || artist_str.empty())
+        {
+            jassertfalse;
             continue; // @TODO: figure out what's going on here!
+        }
 
         const auto song_id = library.songs.size();
         auto& song = library.songs.emplace_back();
