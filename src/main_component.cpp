@@ -18,16 +18,7 @@ Main_Component::Main_Component()
 
     app_state.load_state (*this);
     if (app_state.library_filepath.get().empty())
-    {
-        file_chooser = std::make_shared<juce::FileChooser> ("Choose library folder");
-        file_chooser->launchAsync (juce::FileBrowserComponent::canSelectDirectories,
-                                   [this] (const juce::FileChooser& fc)
-                                   {
-                                       if (fc.getResults().isEmpty())
-                                           return;
-                                       app_state.library_filepath = fc.getResult().getFullPathName().toStdString();
-                                   });
-    }
+        app_state.select_library_folder();
 }
 
 Main_Component::~Main_Component()

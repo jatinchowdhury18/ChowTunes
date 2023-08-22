@@ -108,6 +108,31 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
     timeline.action_router = &action_router;
     timeline.player = &action_router.audio_player;
     addAndMakeVisible (timeline);
+
+    const auto fs = cmrc::gui::get_filesystem();
+    const auto cog_file = fs.open ("cog-solid.svg");
+    settings_button.setImages (juce::Drawable::createFromImageData (cog_file.begin(), cog_file.size()).get());
+    addAndMakeVisible (settings_button);
+    settings_button.onClick = [&app_state]
+    {
+        juce::PopupMenu menu;
+
+        { // select new audio device
+        }
+
+        { // select new library folder
+            juce::PopupMenu::Item library_folder_option;
+            library_folder_option.text = "Select library folder";
+            library_folder_option.itemID = 101;
+            library_folder_option.action = [&app_state]
+            {
+                app_state.select_library_folder();
+            };
+            menu.addItem (std::move (library_folder_option));
+        }
+
+        menu.showMenuAsync ({});
+    };
 }
 
 void Transport_View::resized()
@@ -121,6 +146,8 @@ void Transport_View::resized()
     volume_slider.setBounds (bounds.removeFromLeft (200).withHeight (50).reduced (5));
 
     timeline.setBounds (0, 60, getWidth() * 2 / 3, 30);
+
+    settings_button.setBounds (0, getHeight() - 35, 35, 35);
 }
 
 void Transport_View::paint (juce::Graphics& g)

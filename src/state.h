@@ -21,5 +21,8 @@ struct State : chowdsp::NonParamState
 
     void load_state (Main_Component& main_comp);
     void save_state() const;
+    void select_library_folder();
+
+    std::shared_ptr<juce::FileChooser> file_chooser;
 };
 }

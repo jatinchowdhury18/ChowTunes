@@ -159,7 +159,6 @@ Music_Library index_directory (const std::filesystem::path& path)
         const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
         if (title_str.empty() || album_str.empty() || artist_str.empty())
         {
-            jassertfalse;
             continue; // @TODO: figure out what's going on here!
         }
 

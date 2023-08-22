@@ -34,6 +34,7 @@ struct Transport_View : juce::Component
     juce::Slider volume_slider;
     Transport_Timeline timeline;
 
+    juce::DrawableButton settings_button { "Settings", juce::DrawableButton::ImageFitted };
     juce::Image song_artwork;
 };
 } // namespace chow_tunes::gui

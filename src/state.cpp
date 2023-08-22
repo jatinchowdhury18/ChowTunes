@@ -8,8 +8,9 @@ const auto state_save_path = juce::File { juce::File::getSpecialLocation (juce::
 void State::load_state (Main_Component& main)
 {
     library_filepath.changeBroadcaster.connect (
-        [this, &main] ()
+        [this, &main]()
         {
+            main.play_queue.clear_queue();
             main.library = library::index_directory (library_filepath.get());
 
             main.library_view.load_song_list ({}, main.library);
@@ -17,7 +18,7 @@ void State::load_state (Main_Component& main)
             main.library_view.load_artist_list (main.library.artists, main.library);
         });
     volume_db.changeBroadcaster.connect (
-        [this, &main] ()
+        [this, &main]()
         {
             main.audio_player.volume_db.store (volume_db.get());
             main.transport_view.volume_slider.setValue ((double) volume_db.get(), juce::dontSendNotification);
@@ -33,4 +34,16 @@ void State::save_state() const
     state_save_path.create();
     chowdsp::Serialization::serialize<chowdsp::JSONSerializer> (*this, state_save_path);
 }
+
+void State::select_library_folder()
+{
+    file_chooser = std::make_shared<juce::FileChooser> ("Choose library folder");
+    file_chooser->launchAsync (juce::FileBrowserComponent::canSelectDirectories,
+                               [this] (const juce::FileChooser& fc)
+                               {
+                                   if (fc.getResults().isEmpty())
+                                       return;
+                                   library_filepath = fc.getResult().getFullPathName().toStdString();
+                               });
 }
+} // namespace chow_tunes::state
