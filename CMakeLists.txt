@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 include(cmake/CPM.cmake)
 CPMAddPackage(
     NAME juce
-    GITHUB_REPOSITORY juce-framework/juce
-    GIT_TAG 7.0.6
+    GITHUB_REPOSITORY jatinchowdhury18/juce
+    GIT_TAG global-hotkeys
 )
 CPMAddPackage(
     NAME chowdsp_utils
@@ -63,6 +63,7 @@ target_sources(ChowTunes
         src/gui/play_queue_view.cpp
         src/gui/transport/transport_timeline.cpp
         src/gui/transport/transport_view.cpp
+        src/gui/hotkey_handler.cpp
 )
 
 include(cmake/CMakeRC.cmake)

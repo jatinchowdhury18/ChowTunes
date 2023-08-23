@@ -71,6 +71,11 @@ public:
         quit();
     }
 
+    void systemHotkeyPressed (uint64_t key_id) override
+    {
+        reinterpret_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->hotkey_handler.handle_hotkey_callback (key_id);
+    }
+
     void anotherInstanceStarted (const juce::String& commandLine) override
     {
         if (handleInternalCommandLineOperations (commandLine))

@@ -10,6 +10,7 @@
 #include "gui/library/list_selector.h"
 #include "gui/play_queue_view.h"
 #include "gui/transport/transport_view.h"
+#include "gui/hotkey_handler.h"
 #include "library/music_library.h"
 #include "play_queue/play_queue.h"
 
@@ -38,5 +39,6 @@ struct Main_Component : juce::Component,
     gui::Library_View library_view { library, play_queue };
     gui::Transport_View transport_view { app_state, action_router };
     gui::Play_Queue_View play_queue_view { play_queue };
+    gui::Hotkey_Handler hotkey_handler;
 };
 } // namespace chow_tunes

@@ -1,4 +1,5 @@
 #include "main_component.h"
+#include <Windows.h>
 
 namespace chow_tunes
 {
@@ -6,6 +7,9 @@ Main_Component::Main_Component()
 {
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
+
+    hotkey_handler.main_comp = this;
+    hotkey_handler.register_hotkeys();
 
     play_queue.action_router = &action_router;
 
