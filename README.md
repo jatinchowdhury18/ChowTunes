@@ -19,7 +19,6 @@ I'd like to keep the feature-set pretty small, but I think there's definitely
 some "low-hanging" improvements to be had.
 
 - [ ] Make it look (a lot) nicer
-- [ ] Listen to keypresses (even when minimized/out of focus): play/pause, next/previous song, etc (currently Windows only)
 - [ ] Allow the user to select their own audio device (currently we're just using the default)
 - [ ] Effects
   - [ ] Equalizer

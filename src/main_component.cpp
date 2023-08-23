@@ -1,5 +1,4 @@
 #include "main_component.h"
-#include <Windows.h>
 
 namespace chow_tunes
 {

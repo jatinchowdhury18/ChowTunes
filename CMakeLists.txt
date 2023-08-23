@@ -88,6 +88,9 @@ target_link_libraries(ChowTunes
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
 )
+if(APPLE)
+    target_link_libraries(ChowTunes PRIVATE "-framework Carbon")
+endif()
 
 target_compile_definitions(ChowTunes
     PUBLIC
