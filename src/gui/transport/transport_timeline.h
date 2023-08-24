@@ -17,6 +17,7 @@ struct Transport_Timeline : juce::Component
 
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
+    void movePlayhead (const juce::MouseEvent& e);
 
     audio::Audio_Player_Action_Router* action_router = nullptr;
     audio::Audio_Player* player = nullptr;

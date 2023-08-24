@@ -65,16 +65,17 @@ void Transport_Timeline::paint (juce::Graphics& g)
 
 void Transport_Timeline::mouseDrag (const juce::MouseEvent& e)
 {
-    const auto new_play_percent = (double) e.getPosition().x / (double) getWidth();
-    action_router->route_action ({
-        .action_type = audio::Audio_Player_Action_Type::Move_Playhead,
-        .action_value = new_play_percent,
-    });
+    movePlayhead (e);
 }
 
 void Transport_Timeline::mouseUp (const juce::MouseEvent& e)
 {
-    const auto new_play_percent = (double) e.getPosition().x / (double) getWidth();
+    movePlayhead (e);
+}
+
+void Transport_Timeline::movePlayhead (const juce::MouseEvent& e)
+{
+    const auto new_play_percent = (double) std::clamp (e.getPosition().x, 0, getWidth()) / (double) getWidth();
     action_router->route_action ({
         .action_type = audio::Audio_Player_Action_Type::Move_Playhead,
         .action_value = new_play_percent,

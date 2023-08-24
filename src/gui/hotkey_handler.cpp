@@ -15,7 +15,7 @@ enum
 };
 
 #if JUCE_WINDOWS
-void Hotkey_Handler::register_hotkeys() const
+void Hotkey_Handler::register_hotkeys() // NOLINT
 {
     RegisterHotKey ((HWND) main_comp->getWindowHandle(), PLAY_PAUSE, 0, VK_MEDIA_PLAY_PAUSE);
     RegisterHotKey ((HWND) main_comp->getWindowHandle(), PREVIOUS_SONG, 0, VK_MEDIA_PREV_TRACK);
