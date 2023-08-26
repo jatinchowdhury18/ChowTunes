@@ -60,10 +60,11 @@ target_sources(ChowTunes
 
         src/gui/library/library_view.cpp
         src/gui/library/list_selector.cpp
-        src/gui/play_queue_view.cpp
+        src/gui/search/search_view.cpp
         src/gui/transport/transport_timeline.cpp
         src/gui/transport/transport_view.cpp
         src/gui/hotkey_handler.cpp
+        src/gui/play_queue_view.cpp
 )
 
 include(cmake/CMakeRC.cmake)

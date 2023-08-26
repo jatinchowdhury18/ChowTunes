@@ -124,7 +124,9 @@ Music_Library index_directory (const std::filesystem::path& path)
         //        std::printf ("    Entry: %s\n", dir_entry.path().c_str());
         const auto extension = dir_entry.path().extension();
         if (dir_entry.is_regular_file()
-            && (extension == ".mp3" || extension == ".flac"))
+            && (extension == ".mp3" || extension == ".flac"
+                || extension == ".m4a" || extension == ".aac"
+                || extension == ".ogg"))
         {
             tag_results.push_back (thread_pool.submit (
                 [file_path = dir_entry.path()]() -> Tag_Result

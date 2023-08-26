@@ -4,15 +4,16 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "state.h"
 #include "audio/audio_player.h"
+#include "gui/hotkey_handler.h"
 #include "gui/library/library_view.h"
 #include "gui/library/list_selector.h"
 #include "gui/play_queue_view.h"
+#include "gui/search/search_view.h"
 #include "gui/transport/transport_view.h"
-#include "gui/hotkey_handler.h"
 #include "library/music_library.h"
 #include "play_queue/play_queue.h"
+#include "state.h"
 
 namespace chow_tunes
 {
@@ -24,6 +25,7 @@ struct Main_Component : juce::Component,
 
     void paint (juce::Graphics& g) override;
     void resized() override;
+    bool keyPressed (const juce::KeyPress&) override;
     void timerCallback() override;
 
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
@@ -40,5 +42,6 @@ struct Main_Component : juce::Component,
     gui::Transport_View transport_view { app_state, action_router };
     gui::Play_Queue_View play_queue_view { play_queue };
     gui::Hotkey_Handler hotkey_handler;
+    gui::Search_View search_view;
 };
 } // namespace chow_tunes

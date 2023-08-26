@@ -15,6 +15,7 @@ Main_Component::Main_Component()
     addAndMakeVisible (library_view);
     addAndMakeVisible (transport_view);
     addAndMakeVisible (play_queue_view);
+    addChildComponent (search_view);
 
     startTimer (5);
     setSize (1250, 750);
@@ -37,6 +38,7 @@ void Main_Component::paint (juce::Graphics& g)
 void Main_Component::resized()
 {
     auto bounds = getLocalBounds();
+    search_view.setBounds (bounds);
     transport_view.setBounds (bounds.removeFromBottom (proportionOfHeight (0.2f)));
     play_queue_view.setBounds (bounds.removeFromRight (proportionOfWidth (0.3f)));
     library_view.setBounds (bounds);
@@ -49,5 +51,21 @@ void Main_Component::timerCallback()
         action_router.route_action (std::move (action));
 
     transport_view.timeline.update();
+}
+
+bool Main_Component::keyPressed (const juce::KeyPress& key)
+{
+    const auto character = key.getTextCharacter();
+    if ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z'))
+    {
+        search_view.setVisible (true);
+        search_view.search_entry.clear();
+        search_view.search_entry.setText (juce::String { &character, 1 });
+        search_view.search_entry.grabKeyboardFocus();
+        search_view.search_entry.setCaretPosition (1);
+        return true;
+    }
+
+    return false;
 }
 } // namespace chow_tunes
