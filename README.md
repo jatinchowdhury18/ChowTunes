@@ -38,7 +38,7 @@ For a long while I've used [Dopamine](https://github.com/digimezzo/dopamine), wh
 treated me quite well. However, I wanted to see if I could make something a little bit
 smaller and simpler that still got me the few features that I want in an audio player.
 
-So far I've spent something like 20 hours working on this. So obviously it's not very polished
+I haven't spent much time working on this, so obviously it's not very polished
 and has an extremely minimal feature set, but I think it will get the job done (for now).
 
 ## License
