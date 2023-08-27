@@ -143,8 +143,17 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists, c
         };
         artist_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
     }
-    std::sort (artist_list.cell_entries.begin(), artist_list.cell_entries.end(), [] (auto& artist_cell1, auto& artist_cell2)
-               { return artist_cell1.data->name < artist_cell2.data->name; });
+    std::sort (artist_list.cell_entries.begin(),
+               artist_list.cell_entries.end(),
+               [] (auto& artist_cell1, auto& artist_cell2)
+               {
+                   for (auto [c1, c2] : chowdsp::zip (artist_cell1.data->name, artist_cell2.data->name))
+                   {
+                       if (c1 != c2)
+                           return std::tolower (c1) < std::tolower (c2);
+                   }
+                   return artist_cell1.data->name < artist_cell2.data->name;
+               });
     artist_list.update_size();
 }
 

@@ -17,6 +17,7 @@ void State::load_state (Main_Component& main)
             main.library_view.load_album_list ({}, main.library);
             main.library_view.load_artist_list (main.library.artists, main.library);
 
+            main.transport_view.library = &main.library;
             main.search_view.initialize_search_database (main.library, main.library_view);
         });
     volume_db.changeBroadcaster.connect (

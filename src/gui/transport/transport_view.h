@@ -5,6 +5,11 @@
 
 #include "transport_timeline.h"
 
+namespace chow_tunes::library
+{
+struct Music_Library;
+}
+
 namespace chow_tunes::audio
 {
 struct Audio_Player_Action_Router;
@@ -35,6 +40,11 @@ struct Transport_View : juce::Component
     Transport_Timeline timeline;
 
     juce::DrawableButton settings_button { "Settings", juce::DrawableButton::ImageFitted };
+
+    library::Music_Library* library = nullptr;
+    juce::String artist_name;
+    juce::String album_name;
+    juce::String song_name;
     juce::Image song_artwork;
 };
 } // namespace chow_tunes::gui

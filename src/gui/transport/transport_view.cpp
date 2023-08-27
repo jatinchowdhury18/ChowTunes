@@ -50,43 +50,54 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
         pause_button.setEnabled (play_state == Play_State::Playing);
     };
 
-    const auto load_fallback_artwork = [this]
+    const auto load_fallback_artwork_and_labels = [this]
     {
         const auto fs = cmrc::gui::get_filesystem();
         const auto icon_file = fs.open ("icon.png");
         song_artwork = juce::ImageCache::getFromMemory (icon_file.begin(), (int) icon_file.size());
+
+        artist_name = {};
+        album_name = {};
     };
 
-    const auto update_artwork = [this, load_fallback_artwork, &play_queue = action_router.play_queue]
+    const auto update_artwork_and_labels = [this,
+                                            load_fallback_artwork_and_labels,
+                                            &play_queue = action_router.play_queue]
     {
-        const auto defer_paint = chowdsp::EndOfScopeAction { [this] { repaint(); } };
-
         if (play_queue.currently_playing_song_index == -1)
         {
-            load_fallback_artwork();
+            load_fallback_artwork_and_labels();
             return;
         }
 
         const auto* song = play_queue.queue[(size_t) play_queue.currently_playing_song_index];
         if (song->artwork_file.empty())
         {
-            load_fallback_artwork();
+            load_fallback_artwork_and_labels();
             return;
         }
 
         const auto artwork_path_str = juce::String::fromUTF8 ((const char*) song->artwork_file.data(), (int) song->artwork_file.size());
         song_artwork = juce::ImageCache::getFromFile (juce::File { artwork_path_str });
+        song_name = juce::String::fromUTF8 ((const char*) song->name.data(), (int) song->name.size());
+
+        const auto& artist = library->artists[song->artist_id];
+        artist_name = juce::String::fromUTF8 ((const char*) artist.name.data(), (int) artist.name.size());
+
+        const auto& album = library->albums[song->album_id];
+        album_name = juce::String::fromUTF8 ((const char*) album.name.data(), (int) album.name.size());
 
         if (song_artwork.isNull())
-            load_fallback_artwork();
+            load_fallback_artwork_and_labels();
     };
 
     button_change_callbacks += {
         action_router.play_queue.queue_changed.connect (
-            [update_button_states, update_artwork]
+            [this, update_button_states, update_artwork_and_labels]
             {
                 update_button_states();
-                update_artwork();
+                update_artwork_and_labels();
+                repaint();
             }),
         action_router.play_state_changed.connect (update_button_states),
     };
@@ -103,7 +114,7 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
     };
     addAndMakeVisible (volume_slider);
 
-    load_fallback_artwork();
+    load_fallback_artwork_and_labels();
 
     timeline.action_router = &action_router;
     timeline.player = &action_router.audio_player;
@@ -154,5 +165,14 @@ void Transport_View::paint (juce::Graphics& g)
 {
     const auto artwork_bounds = getLocalBounds().removeFromRight (getHeight());
     g.drawImage (song_artwork, artwork_bounds.toFloat());
+
+    const auto settings_button_bounds = settings_button.getBoundsInParent();
+    const auto label_bounds = settings_button_bounds
+                                  .withLeft (settings_button_bounds.getRight())
+                                  .withRight (artwork_bounds.getX())
+                                  .reduced (10, 0);
+    g.setColour (juce::Colours::white);
+    g.setFont (18.0f);
+    g.drawFittedText (artist_name + " || " + album_name + " || " + song_name, label_bounds, juce::Justification::right, 1);
 }
 } // namespace chow_tunes::gui

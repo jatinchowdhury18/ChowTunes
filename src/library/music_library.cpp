@@ -29,6 +29,12 @@ static std::u8string_view to_u8string_view (chowdsp::StackAllocator& alloc, cons
     return { str_view_start, static_cast<size_t> (str_view_length) };
 }
 
+static bool equals_ignore_case (const std::u8string_view& lhs, const std::u8string_view& rhs)
+{
+    return std::equal (lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (char a, char b)
+                       { return std::tolower (a) == std::tolower (b); });
+}
+
 template <typename IntType>
 std::string_view temp_string (chowdsp::StackAllocator& alloc, const char* data, IntType count)
 {
@@ -62,7 +68,7 @@ static Artist& get_artist_for_song (Music_Library& library, Song& song, std::u8s
 {
     for (auto [idx, artist] : chowdsp::enumerate (library.artists))
     {
-        if (artist.name == artist_name)
+        if (equals_ignore_case (artist.name, artist_name))
         {
             song.artist_id = idx;
             return artist;
@@ -77,12 +83,21 @@ static Artist& get_artist_for_song (Music_Library& library, Song& song, std::u8s
 
 static Album& get_album_for_song (Music_Library& library, Song& song, std::u8string_view album_name, Artist& artist)
 {
-    for (auto album_id : artist.album_ids)
+//    for (auto album_id : artist.album_ids)
+//    {
+//        auto& album = library.albums[album_id];
+//        if (album.name == album_name)
+//        {
+//            song.album_id = album_id;
+//            return album;
+//        }
+//    }
+
+    for (auto [idx, album] : chowdsp::enumerate (library.albums))
     {
-        auto& album = library.albums[album_id];
-        if (album.name == album_name)
+        if (equals_ignore_case (album.name, album_name))
         {
-            song.album_id = album_id;
+            song.album_id = idx;
             return album;
         }
     }
@@ -96,6 +111,25 @@ static Album& get_album_for_song (Music_Library& library, Song& song, std::u8str
         artist.album_ids.push_back (song.album_id);
 
     return song_album;
+}
+
+static bool song_is_already_in_library (const Music_Library& library,
+                                        const std::u8string_view& artist_name,
+                                        const std::u8string_view& album_name,
+                                        const std::u8string_view& song_name)
+{
+    for (const auto& test_song : library.songs)
+    {
+        if (test_song.name != song_name)
+            continue;
+
+        const auto test_artist = library.artists[test_song.artist_id];
+        const auto test_album = library.albums[test_song.album_id];
+        if (equals_ignore_case (test_artist.name, artist_name)
+            && equals_ignore_case (test_album.name, album_name))
+            return true;
+    }
+    return false;
 }
 
 Music_Library index_directory (const std::filesystem::path& path)
@@ -163,6 +197,9 @@ Music_Library index_directory (const std::filesystem::path& path)
         {
             continue; // @TODO: figure out what's going on here!
         }
+
+        if (song_is_already_in_library (library, artist_str, album_str, title_str))
+            continue;
 
         const auto song_id = library.songs.size();
         auto& song = library.songs.emplace_back();

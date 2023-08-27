@@ -25,26 +25,17 @@ struct Search_View : juce::Component
 
     struct Search_Result : juce::Label
     {
-        void paint (juce::Graphics& g) override
-        {
-            g.fillAll (juce::Colours::darkgrey);
-            g.setColour (juce::Colours::slategrey);
-            g.drawRect (getLocalBounds());
-
-            g.setColour (juce::Colours::white);
-            g.setFont (16.0f);
-            g.drawFittedText (getText(), getLocalBounds(), juce::Justification::centred, 1);
-        }
-
-        void mouseUp (const juce::MouseEvent& e) override
-        {
-            onClick (e);
-        }
-
+        void paint (juce::Graphics& g) override;
+        void mouseUp (const juce::MouseEvent& e) override;
         std::function<void (const juce::MouseEvent&)> onClick;
     };
     std::array<Search_Result, 10> results;
 
-    fuzzysearch::Database<int> search_database;
+    enum class Search_Result_Type
+    {
+        Artist,
+        Album,
+    };
+    fuzzysearch::Database<std::pair<Search_Result_Type, int>> search_database;
 };
 } // namespace chow_tunes::gui

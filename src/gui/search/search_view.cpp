@@ -1,10 +1,44 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
 
-#include "search_view.h"
 #include "library/music_library.h"
+#include "search_view.h"
 
 namespace chow_tunes::gui
 {
+void Search_View::Search_Result::paint (juce::Graphics& g)
+{
+    g.fillAll (juce::Colours::darkgrey);
+    g.setColour (juce::Colours::slategrey);
+    g.drawRect (getLocalBounds());
+
+    g.setColour (juce::Colours::white);
+    g.setFont (16.0f);
+    g.drawFittedText (getText(), getLocalBounds(), juce::Justification::centred, 1);
+}
+
+void Search_View::Search_Result::mouseUp (const juce::MouseEvent& e)
+{
+    onClick (e);
+}
+
+//=================================================
+template <typename List_Selector>
+static void select_cell (List_Selector& list,
+                         std::u8string_view name,
+                         const juce::MouseEvent& e)
+{
+    for (auto cell : list.cell_entries)
+    {
+        if (cell.data->name == name)
+        {
+            auto& cell_component = *list.cell_components.find (cell.component_locator);
+            cell_component->mouseDown (e);
+            list.setViewPosition (cell_component->getBoundsInParent().getTopLeft());
+            break;
+        }
+    }
+}
+
 Search_View::Search_View()
 {
     search_entry.setWantsKeyboardFocus (true);
@@ -29,8 +63,13 @@ void Search_View::initialize_search_database (library::Music_Library& library, L
     search_database.reset();
     search_database.setThreshold (0.5f);
 
+    namespace chrono = std::chrono;
     for (auto [idx, artist] : chowdsp::enumerate (library.artists))
-        search_database.addEntry ((int) idx, { std::u8string { artist.name } });
+        search_database.addEntry (std::make_pair (Search_Result_Type::Artist, (int) idx),
+                                  { std::u8string { artist.name } });
+    for (auto [idx, album] : chowdsp::enumerate (library.albums))
+        search_database.addEntry (std::make_pair (Search_Result_Type::Album, (int) idx),
+                                  { std::u8string { album.name } });
 
     search_entry.onTextChange = [this, &library, &library_view]
     {
@@ -39,24 +78,34 @@ void Search_View::initialize_search_database (library::Music_Library& library, L
 
         for (auto [result, label] : chowdsp::zip (search_results, results))
         {
-            const auto artist_name = library.artists[(size_t) result.key].name;
-            const auto text_str = juce::String::fromUTF8 ((const char*) artist_name.data(), (int) artist_name.size());
-            label.setText (text_str, juce::dontSendNotification);
-            label.setVisible (true);
-            label.onClick = [this, &library_view, artist_name] (const juce::MouseEvent& e)
+            const auto [result_type, result_id] = result.key;
+            if (result_type == Search_Result_Type::Artist)
             {
-                for (auto cell : library_view.artist_list.cell_entries)
+                const auto artist_name = library.artists[(size_t) result_id].name;
+                const auto text_str = juce::String::fromUTF8 ((const char*) artist_name.data(), (int) artist_name.size());
+                label.setText (text_str, juce::dontSendNotification);
+                label.setVisible (true);
+                label.onClick = [this, &library_view, artist_name] (const juce::MouseEvent& e)
                 {
-                    if (cell.data->name == artist_name)
-                    {
-                        auto& cell_component = *library_view.artist_list.cell_components.find (cell.component_locator);
-                        cell_component->mouseDown (e);
-                        library_view.artist_list.setViewPosition (cell_component->getBoundsInParent().getTopLeft());
-                        break;
-                    }
-                }
-                setVisible (false);
-            };
+                    select_cell (library_view.artist_list, artist_name, e);
+                    setVisible (false);
+                };
+            }
+            else if (result_type == Search_Result_Type::Album)
+            {
+                const auto& album = library.albums[(size_t) result_id];
+                const auto album_name = album.name;
+                const auto artist_name = library.artists[album.artist_id].name;
+                const auto text_str = juce::String::fromUTF8 ((const char*) album_name.data(), (int) album_name.size());
+                label.setText (text_str, juce::dontSendNotification);
+                label.setVisible (true);
+                label.onClick = [this, &library_view, album_name, artist_name] (const juce::MouseEvent& e)
+                {
+                    select_cell (library_view.artist_list, artist_name, e);
+                    select_cell (library_view.album_list, album_name, e);
+                    setVisible (false);
+                };
+            }
         }
 
         for (size_t i = search_results.size(); i < results.size(); ++i)
