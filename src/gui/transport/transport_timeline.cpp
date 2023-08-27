@@ -27,8 +27,17 @@ void Transport_Timeline::update()
         return result;
     };
 
-    needs_repaint |= compare_exchange (play_percent, player->get_song_progress_percent());
-    needs_repaint |= compare_exchange (playing_seconds, player->get_seconds_played());
+
+    if (auto& player_opt = *player; player_opt.has_value())
+    {
+        needs_repaint |= compare_exchange (play_percent, player_opt->get_song_progress_percent());
+        needs_repaint |= compare_exchange (playing_seconds, player_opt->get_seconds_played());
+    }
+    else
+    {
+        needs_repaint |= compare_exchange (play_percent, 0.0);
+        needs_repaint |= compare_exchange (playing_seconds, (size_t) 0);
+    }
 }
 
 void Transport_Timeline::paint (juce::Graphics& g)

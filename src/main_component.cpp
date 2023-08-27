@@ -4,6 +4,7 @@ namespace chow_tunes
 {
 Main_Component::Main_Component()
 {
+    audio_player.emplace();
     audio_format_manager.registerBasicFormats();
     juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
 
@@ -46,9 +47,12 @@ void Main_Component::resized()
 
 void Main_Component::timerCallback()
 {
-    audio::Audio_Player_Action action;
-    while (audio_player.audio_to_ui_queue.try_dequeue (action))
-        action_router.route_action (std::move (action));
+    if (audio_player.has_value())
+    {
+        audio::Audio_Player_Action action;
+        while (audio_player->audio_to_ui_queue.try_dequeue (action))
+            action_router.route_action (std::move (action));
+    }
 
     transport_view.timeline.update();
 }
@@ -60,7 +64,11 @@ bool Main_Component::keyPressed (const juce::KeyPress& key)
     {
         search_view.setVisible (true);
         search_view.search_entry.clear();
+#if JUCE_WINDOWS
+        search_view.search_entry.setText (juce::String { (const wchar_t*) &character, 1 });
+#else
         search_view.search_entry.setText (juce::String { &character, 1 });
+#endif
         search_view.search_entry.grabKeyboardFocus();
         search_view.search_entry.setCaretPosition (1);
         return true;

@@ -44,7 +44,7 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
         restart_button.setEnabled (! play_queue.queue.empty() && play_queue.currently_playing_song_index >= 0);
 
         using Play_State = audio::Audio_Player::State;
-        const auto play_state = player.state.load();
+        const auto play_state = player.has_value() ? player->state.load() : Play_State::Stopped;
 
         play_button.setEnabled (play_state == Play_State::Paused);
         pause_button.setEnabled (play_state == Play_State::Playing);

@@ -20,7 +20,7 @@ struct Transport_Timeline : juce::Component
     void movePlayhead (const juce::MouseEvent& e);
 
     audio::Audio_Player_Action_Router* action_router = nullptr;
-    audio::Audio_Player* player = nullptr;
+    std::optional<audio::Audio_Player>* player = nullptr;
     double play_percent = 0.0;
     size_t playing_seconds = 0;
 };

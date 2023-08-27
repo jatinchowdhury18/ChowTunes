@@ -36,7 +36,8 @@ void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
         || action.action_type == Action_Type::Move_Playhead
         || action.action_type == Action_Type::Stop_Song)
     {
-        audio_player.ui_to_audio_queue.enqueue (std::move (action));
+        if (audio_player.has_value())
+            audio_player->ui_to_audio_queue.enqueue (std::move (action));
     }
     else if (action.action_type == Action_Type::Dead_Song)
     {
@@ -49,11 +50,13 @@ void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
     }
     else if (action.action_type == Action_Type::Play_Song)
     {
-        chowdsp::AtomicHelpers::compareExchange (audio_player.state, Play_State::Paused, Play_State::Playing);
+        if (audio_player.has_value())
+            chowdsp::AtomicHelpers::compareExchange (audio_player->state, Play_State::Paused, Play_State::Playing);
     }
     else if (action.action_type == Action_Type::Pause_Song)
     {
-        chowdsp::AtomicHelpers::compareExchange (audio_player.state, Play_State::Playing, Play_State::Paused);
+        if (audio_player.has_value())
+            chowdsp::AtomicHelpers::compareExchange (audio_player->state, Play_State::Playing, Play_State::Paused);
     }
     else if (action.action_type == Action_Type::Restart_Song)
     {

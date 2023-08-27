@@ -23,8 +23,11 @@ void State::load_state (Main_Component& main)
     volume_db.changeBroadcaster.connect (
         [this, &main]()
         {
-            main.audio_player.volume_db.store (volume_db.get());
-            main.transport_view.volume_slider.setValue ((double) volume_db.get(), juce::dontSendNotification);
+            if (main.audio_player.has_value())
+            {
+                main.audio_player->volume_db.store (volume_db.get());
+                main.transport_view.volume_slider.setValue ((double) volume_db.get(), juce::dontSendNotification);
+            }
         });
 
     if (state_save_path.existsAsFile())

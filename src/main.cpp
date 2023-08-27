@@ -60,6 +60,18 @@ public:
         mainWindow = std::make_unique<MainWindow> (getApplicationName());
     }
 
+    void suspended() override
+    {
+        dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->audio_player.reset();
+    }
+
+    void resumed() override
+    {
+        auto* main = dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent());
+        main->audio_player.emplace();
+        main->app_state.volume_db.changeBroadcaster();
+    }
+
     void shutdown() override
     {
         // Add your application's shutdown code here..
@@ -73,7 +85,7 @@ public:
 
     void systemHotkeyPressed (uint64_t key_id) override
     {
-        reinterpret_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->hotkey_handler.handle_hotkey_callback (key_id);
+        dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->hotkey_handler.handle_hotkey_callback (key_id);
     }
 
     void anotherInstanceStarted (const juce::String& commandLine) override

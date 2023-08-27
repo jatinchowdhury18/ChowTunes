@@ -34,7 +34,7 @@ struct Main_Component : juce::Component,
     state::State app_state;
 
     library::Music_Library library {};
-    audio::Audio_Player audio_player;
+    std::optional<audio::Audio_Player> audio_player;
     play_queue::Play_Queue play_queue;
     audio::Audio_Player_Action_Router action_router { .audio_player = audio_player, .play_queue = play_queue };
 

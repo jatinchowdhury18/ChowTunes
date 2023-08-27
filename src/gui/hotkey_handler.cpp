@@ -63,14 +63,15 @@ void Hotkey_Handler::register_hotkeys()
 void Hotkey_Handler::handle_hotkey_callback (uint64_t key_id) const
 {
     using Action_Type = audio::Audio_Player_Action_Type;
+    using Play_State = audio::Audio_Player::State;
     if (key_id == PLAY_PAUSE)
     {
-        const auto play_state = main_comp->audio_player.state.load();
-        if (play_state == audio::Audio_Player::State::Playing)
+        const auto play_state = main_comp->audio_player.has_value() ? main_comp->audio_player->state.load() : Play_State::Stopped;
+        if (play_state == Play_State::Playing)
         {
             main_comp->action_router.route_action ({ .action_type = Action_Type::Pause_Song });
         }
-        else if (play_state == audio::Audio_Player::State::Paused)
+        else if (play_state == Play_State::Paused)
         {
             main_comp->action_router.route_action ({ .action_type = Action_Type::Play_Song });
         }

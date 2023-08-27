@@ -51,7 +51,7 @@ struct Audio_Player_Action_Router
 {
     void route_action (Audio_Player_Action&& action);
 
-    Audio_Player& audio_player;
+    std::optional<audio::Audio_Player>& audio_player;
     play_queue::Play_Queue& play_queue;
     chowdsp::Broadcaster<void()> play_state_changed;
 };
