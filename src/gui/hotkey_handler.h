@@ -14,6 +14,13 @@ struct Main_Component;
 
 namespace chow_tunes::gui
 {
+enum Hotkey_Action
+{
+    PLAY_PAUSE = 1,
+    PREVIOUS_SONG,
+    NEXT_SONG,
+};
+
 struct Hotkey_Handler
 {
     void register_hotkeys();

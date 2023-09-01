@@ -47,10 +47,12 @@ public:
 
     const juce::String getApplicationName() override { return "ChowTunes"; }
     const juce::String getApplicationVersion() override { return "0.1.0"; } // TODO
-    bool moreThanOneInstanceAllowed() override { return true; }
+    bool moreThanOneInstanceAllowed() override { return false; }
 
     void initialise (const juce::String& commandLine) override
     {
+        juce::StringArray args;
+        args.addTokens (commandLine, " ", "");
         if (handleInternalCommandLineOperations (commandLine))
         {
             quit();
@@ -83,23 +85,46 @@ public:
         quit();
     }
 
+    auto& getHotkeyHandler()
+    {
+        return dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->hotkey_handler;
+    }
+
     void systemHotkeyPressed (uint64_t key_id) override
     {
-        dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent())->hotkey_handler.handle_hotkey_callback (key_id);
+        getHotkeyHandler().handle_hotkey_callback (key_id);
     }
 
     void anotherInstanceStarted (const juce::String& commandLine) override
     {
-        if (handleInternalCommandLineOperations (commandLine))
-            return;
-    }
-
-    bool handleInternalCommandLineOperations ([[maybe_unused]] const juce::String& commandLine) // NOLINT
-    {
         juce::StringArray args;
         args.addTokens (commandLine, " ", "");
 
-        for (const auto [idx, arg] : chowdsp::enumerate (args))
+        if (args.contains ("next-song"))
+        {
+            getHotkeyHandler().handle_hotkey_callback (chow_tunes::gui::Hotkey_Action::NEXT_SONG);
+            return;
+        }
+
+        if (args.contains ("previous-song"))
+        {
+            getHotkeyHandler().handle_hotkey_callback (chow_tunes::gui::Hotkey_Action::PREVIOUS_SONG);
+            return;
+        }
+
+        if (args.contains ("play-pause"))
+        {
+            getHotkeyHandler().handle_hotkey_callback (chow_tunes::gui::Hotkey_Action::PLAY_PAUSE);
+            return;
+        }
+
+        if (handleInternalCommandLineOperations (args))
+            return;
+    }
+
+    bool handleInternalCommandLineOperations (const juce::StringArray& args) // NOLINT
+    {
+        for (const auto [idx, arg] : chowdsp::enumerate (args)) // NOLINT
         {
             if (arg == "--index")
             {
