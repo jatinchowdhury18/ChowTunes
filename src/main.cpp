@@ -1,9 +1,10 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
 #include <chrono>
 
+#include "gui/gui_resources.h"
 #include "library/music_library.h"
 #include "main_component.h"
-#include "gui/gui_resources.h"
+#include "gui/command_line.h"
 
 class ChowTunesApplication : public juce::JUCEApplication
 {
@@ -52,7 +53,7 @@ public:
     void initialise (const juce::String& commandLine) override
     {
         juce::StringArray args;
-        args.addTokens (commandLine, " ", "");
+        args.addTokens (commandLine, " ", "\"");
         if (handleInternalCommandLineOperations (commandLine))
         {
             quit();
@@ -98,7 +99,7 @@ public:
     void anotherInstanceStarted (const juce::String& commandLine) override
     {
         juce::StringArray args;
-        args.addTokens (commandLine, " ", "");
+        args.addTokens (commandLine, " ", "\"");
 
         if (args.contains ("next-song"))
         {
@@ -115,6 +116,13 @@ public:
         if (args.contains ("play-pause"))
         {
             getHotkeyHandler().handle_hotkey_callback (chow_tunes::gui::Hotkey_Action::PLAY_PAUSE);
+            return;
+        }
+
+        if (args.contains ("--play"))
+        {
+            auto* main = dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent());
+            chow_tunes::cli::play_command (args, main->library, main->play_queue);
             return;
         }
 

@@ -17,6 +17,16 @@ namespace play_queue
 
 namespace chow_tunes::gui
 {
+inline auto get_album_songs (const library::Album& album, const library::Music_Library& library)
+{
+    chowdsp::SmallVector<const library::Song*, 20> album_songs;
+    for (auto song_id : album.song_ids)
+        album_songs.push_back (&library.songs[song_id]);
+    std::sort (album_songs.begin(), album_songs.end(), [] (auto& song1, auto& song2)
+               { return song1->track_number < song2->track_number; });
+    return album_songs;
+}
+
 struct Library_View : juce::Component
 {
     Library_View (const library::Music_Library& library, play_queue::Play_Queue& play_queue);

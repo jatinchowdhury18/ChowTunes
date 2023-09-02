@@ -41,16 +41,6 @@ static void setup_play_menu (juce::PopupMenu& menu,
     menu.addItem (std::move (insert_last_item));
 }
 
-static auto get_album_songs (const library::Album& album, const library::Music_Library& library)
-{
-    chowdsp::SmallVector<const library::Song*, 20> album_songs;
-    for (auto song_id : album.song_ids)
-        album_songs.push_back (&library.songs[song_id]);
-    std::sort (album_songs.begin(), album_songs.end(), [] (auto& song1, auto& song2)
-               { return song1->track_number < song2->track_number; });
-    return album_songs;
-}
-
 void Library_View::load_song_list (std::span<const size_t> song_ids, const library::Music_Library& library)
 {
     song_list.cell_entries.clear();

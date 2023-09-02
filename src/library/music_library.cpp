@@ -81,21 +81,17 @@ static Artist& get_artist_for_song (Music_Library& library, Song& song, std::u8s
     return song_artist;
 }
 
-static Album& get_album_for_song (Music_Library& library, Song& song, std::u8string_view album_name, Artist& artist)
+static Album& get_album_for_song (Music_Library& library,
+                                  Song& song,
+                                  std::u8string_view album_name,
+                                  size_t album_year,
+                                  Artist& artist)
 {
-//    for (auto album_id : artist.album_ids)
-//    {
-//        auto& album = library.albums[album_id];
-//        if (album.name == album_name)
-//        {
-//            song.album_id = album_id;
-//            return album;
-//        }
-//    }
-
     for (auto [idx, album] : chowdsp::enumerate (library.albums))
     {
-        if (equals_ignore_case (album.name, album_name))
+        // If an album has the same name and same year, we'll say it's the same album
+        // (even if the songs on the album aren't all from the same artist)
+        if (equals_ignore_case (album.name, album_name) && album.year == album_year)
         {
             song.album_id = idx;
             return album;
@@ -206,7 +202,7 @@ Music_Library index_directory (const std::filesystem::path& path)
         song.name = title_str;
 
         auto& song_artist = get_artist_for_song (library, song, artist_str);
-        auto& song_album = get_album_for_song (library, song, album_str, song_artist);
+        auto& song_album = get_album_for_song (library, song, album_str, tag->year(), song_artist);
         song_album.song_ids.push_back (song_id);
         song_album.year = tag->year();
 

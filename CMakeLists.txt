@@ -63,6 +63,7 @@ target_sources(ChowTunes
         src/gui/search/search_view.cpp
         src/gui/transport/transport_timeline.cpp
         src/gui/transport/transport_view.cpp
+        src/gui/command_line.cpp
         src/gui/hotkey_handler.cpp
         src/gui/play_queue_view.cpp
 )
