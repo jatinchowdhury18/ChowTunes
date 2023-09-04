@@ -50,35 +50,33 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
         pause_button.setEnabled (play_state == Play_State::Playing);
     };
 
-    const auto load_fallback_artwork_and_labels = [this]
+    const auto load_fallback_artwork = [this]
     {
         const auto fs = cmrc::gui::get_filesystem();
         const auto icon_file = fs.open ("icon.png");
         song_artwork = juce::ImageCache::getFromMemory (icon_file.begin(), (int) icon_file.size());
+    };
 
+    const auto load_fallback_labels = [this]
+    {
         artist_name = {};
         album_name = {};
+        song_name = {};
     };
 
     const auto update_artwork_and_labels = [this,
-                                            load_fallback_artwork_and_labels,
+                                            load_fallback_artwork,
+                                            load_fallback_labels,
                                             &play_queue = action_router.play_queue]
     {
         if (play_queue.currently_playing_song_index == -1)
         {
-            load_fallback_artwork_and_labels();
+            load_fallback_artwork();
+            load_fallback_labels();
             return;
         }
 
         const auto* song = play_queue.queue[(size_t) play_queue.currently_playing_song_index];
-        if (song->artwork_file.empty())
-        {
-            load_fallback_artwork_and_labels();
-            return;
-        }
-
-        const auto artwork_path_str = juce::String::fromUTF8 ((const char*) song->artwork_file.data(), (int) song->artwork_file.size());
-        song_artwork = juce::ImageCache::getFromFile (juce::File { artwork_path_str });
         song_name = juce::String::fromUTF8 ((const char*) song->name.data(), (int) song->name.size());
 
         const auto& artist = library->artists[song->artist_id];
@@ -87,8 +85,18 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
         const auto& album = library->albums[song->album_id];
         album_name = juce::String::fromUTF8 ((const char*) album.name.data(), (int) album.name.size());
 
-        if (song_artwork.isNull())
-            load_fallback_artwork_and_labels();
+        if (song->artwork_file.empty())
+        {
+            load_fallback_artwork();
+        }
+        else
+        {
+            const auto artwork_path_str = juce::String::fromUTF8 ((const char*) song->artwork_file.data(), (int) song->artwork_file.size());
+            song_artwork = juce::ImageCache::getFromFile (juce::File { artwork_path_str });
+
+            if (song_artwork.isNull())
+                load_fallback_artwork();
+        }
     };
 
     button_change_callbacks += {
@@ -114,7 +122,8 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
     };
     addAndMakeVisible (volume_slider);
 
-    load_fallback_artwork_and_labels();
+    load_fallback_artwork();
+    load_fallback_labels();
 
     timeline.action_router = &action_router;
     timeline.player = &action_router.audio_player;
