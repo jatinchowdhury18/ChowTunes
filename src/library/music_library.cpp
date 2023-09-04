@@ -95,11 +95,31 @@ static Album& get_album_for_song (Music_Library& library,
         }
     };
 
+    const auto roughly_the_same_artist = [&library, &song_artist = library.artists[song.artist_id]] (const Album& album) -> bool
+    {
+        const auto album_artist = library.artists[album.artist_id];
+        if (&album_artist == &song_artist)
+            return true;
+
+        if (album_artist.name.size() == song_artist.name.size())
+            return album_artist.name == song_artist.name;
+
+        const auto larger_name = album_artist.name.size() > song_artist.name.size() ? album_artist.name : song_artist.name;
+        const auto smaller_name = album_artist.name.size() < song_artist.name.size() ? album_artist.name : song_artist.name;
+        return larger_name.find (smaller_name) != std::u8string_view::npos;
+    };
+
     for (auto [idx, album] : chowdsp::enumerate (library.albums))
     {
-        // If an album has the same name and same year, we'll say it's the same album
-        // (even if the songs on the album aren't all from the same artist)
-        if (equals_ignore_case (album.name, album_name) && album.year == album_year)
+        // So we have this problem where we want to figure out which album a song is from
+        // even though an album might contain multiple songs from different artists. So
+        // we're going to say that if two songs are from albums with the same name
+        // From either the same year or the same artist, then we'll consider them to be
+        // from the same album.
+        //
+        // @TODO: can we split up Disc 1 from Disc 2?
+
+        if (equals_ignore_case (album.name, album_name) && (album.year == album_year || roughly_the_same_artist (album)))
         {
             song.album_id = idx;
             return album;
