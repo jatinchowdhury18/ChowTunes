@@ -87,6 +87,14 @@ static Album& get_album_for_song (Music_Library& library,
                                   size_t album_year,
                                   Artist& artist)
 {
+    chowdsp::EndOfScopeAction _ {
+        [&artist, &song]
+        {
+            if (std::find (artist.album_ids.begin(), artist.album_ids.end(), song.album_id) == artist.album_ids.end())
+                artist.album_ids.push_back (song.album_id);
+        }
+    };
+
     for (auto [idx, album] : chowdsp::enumerate (library.albums))
     {
         // If an album has the same name and same year, we'll say it's the same album
@@ -102,10 +110,6 @@ static Album& get_album_for_song (Music_Library& library,
     auto& song_album = library.albums.emplace_back();
     song_album.name = album_name;
     song_album.artist_id = song.artist_id;
-
-    if (std::find (artist.album_ids.begin(), artist.album_ids.end(), song.album_id) == artist.album_ids.end())
-        artist.album_ids.push_back (song.album_id);
-
     return song_album;
 }
 

@@ -142,6 +142,17 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
             menu.addItem (std::move (library_folder_option));
         }
 
+        { // re-scan library
+            juce::PopupMenu::Item rescan_library_option;
+            rescan_library_option.text = "Re-scan library folder";
+            rescan_library_option.itemID = 102;
+            rescan_library_option.action = [&app_state]
+            {
+                app_state.library_filepath.changeBroadcaster();
+            };
+            menu.addItem (std::move (rescan_library_option));
+        }
+
         menu.showMenuAsync ({});
     };
 }
