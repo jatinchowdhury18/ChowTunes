@@ -65,7 +65,7 @@ template <typename Cell_Data>
 void Cell_Base<Cell_Data>::paint (juce::Graphics& g)
 {
     if (is_selected)
-        g.fillAll (juce::Colours::dodgerblue.withAlpha (0.5f));
+        g.fillAll (selection_fill_colour);
 
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
@@ -75,12 +75,13 @@ void Cell_Base<Cell_Data>::paint (juce::Graphics& g)
 }
 
 template <typename Cell_Data>
-void Cell_Base<Cell_Data>::select_cell()
+void Cell_Base<Cell_Data>::select_cell (bool clear_existing_selection)
 {
     if (is_selected)
         return;
 
-    list->clear_selection();
+    if (clear_existing_selection)
+        list->clear_selection();
     is_selected = true;
     list->repaint();
 }
@@ -88,6 +89,8 @@ void Cell_Base<Cell_Data>::select_cell()
 template <typename Cell_Data>
 void Cell_Base<Cell_Data>::mouseDown (const juce::MouseEvent& e)
 {
+    latest_mouse_event.emplace (e);
+
     if (list->select_on_click)
         select_cell();
 
@@ -101,8 +104,10 @@ void Cell_Base<Cell_Data>::mouseDown (const juce::MouseEvent& e)
 }
 
 template <typename Cell_Data>
-void Cell_Base<Cell_Data>::mouseDoubleClick (const juce::MouseEvent&)
+void Cell_Base<Cell_Data>::mouseDoubleClick (const juce::MouseEvent& e)
 {
+    latest_mouse_event.emplace (e);
+
     if (list->select_on_click)
         select_cell();
 

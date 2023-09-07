@@ -1,4 +1,5 @@
 #include "play_queue.h"
+#include <ranges>
 
 namespace chow_tunes::play_queue
 {
@@ -60,7 +61,9 @@ void Play_Queue::add_to_queue (std::span<const library::Song*> songs_to_add, Add
     queue_changed();
 }
 
-void Play_Queue::move_song_up (const library::Song* song)
+void move_song_up (std::vector<const library::Song*>& queue,
+                   const library::Song* song,
+                   int& playing_idx)
 {
     auto song_iter = std::find (queue.begin(), queue.end(), song);
     if (song_iter == queue.begin() || song_iter == queue.end())
@@ -69,11 +72,15 @@ void Play_Queue::move_song_up (const library::Song* song)
         return;
     }
 
+    if (std::distance (queue.begin(), song_iter - 1) == playing_idx)
+        playing_idx++;
+
     std::rotate (song_iter - 1, song_iter, song_iter + 1);
-    queue_changed();
 }
 
-void Play_Queue::move_song_down (const library::Song* song)
+void move_song_down (std::vector<const library::Song*>& queue,
+                     const library::Song* song,
+                     int& playing_idx)
 {
     auto song_iter = std::find (queue.begin(), queue.end(), song);
     if (song_iter == queue.end() - 1 || song_iter == queue.end())
@@ -82,13 +89,34 @@ void Play_Queue::move_song_down (const library::Song* song)
         return;
     }
 
+    if (std::distance (queue.begin(), song_iter + 1) == playing_idx)
+        playing_idx--;
+
     std::rotate (song_iter, song_iter + 1, song_iter + 2);
-    queue_changed();
 }
 
-void Play_Queue::remove_song (size_t song_idx)
+void Play_Queue::move_songs_up (std::span<size_t> song_indexes)
 {
-    queue.erase (queue.begin() + (int) song_idx);
+    if (song_indexes.front() == 0)
+        return;
+
+    for (auto i : song_indexes)
+        move_song_up (queue, queue[i], currently_playing_song_index);
+}
+
+void Play_Queue::move_songs_down (std::span<size_t> song_indexes)
+{
+    if (song_indexes.back() == queue.size() - 1)
+        return;
+
+    for (auto i : std::views::reverse (song_indexes))
+        move_song_down (queue, queue[i], currently_playing_song_index);
+}
+
+void Play_Queue::remove_songs (std::span<size_t> song_indexes)
+{
+    for (auto i : std::views::reverse (song_indexes))
+        queue.erase (queue.begin() + (int) i);
     queue_changed();
 }
 

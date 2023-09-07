@@ -27,9 +27,9 @@ struct Play_Queue
     void restart_current_song();
 
     void add_to_queue (std::span<const library::Song*> songs_to_add, Add_To_Queue_Action action);
-    void move_song_up (const library::Song* song);
-    void move_song_down (const library::Song* song);
-    void remove_song (size_t song_idx);
+    void move_songs_up (std::span<size_t> song_indexes);
+    void move_songs_down (std::span<size_t> song_indexes);
+    void remove_songs (std::span<size_t> song_indexes);
     void clear_queue();
 };
 } // namespace chow_tunes::play_queue

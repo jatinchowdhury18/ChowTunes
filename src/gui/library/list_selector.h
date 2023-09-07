@@ -47,13 +47,15 @@ struct Cell_Base : juce::Component
     const Data_Type* data = nullptr;
     List_Selector<Data_Type>* list = nullptr;
     bool is_selected = false;
+    juce::Colour selection_fill_colour = juce::Colours::dodgerblue.withAlpha (0.5f);
     std::u8string_view label_text {};
+    std::optional<juce::MouseEvent> latest_mouse_event;
 
     std::function<void (const Data_Type&)> cell_clicked = [] (const Data_Type&) {};
     std::function<void (const Data_Type&)> cell_right_clicked = [] (const Data_Type&) {};
     std::function<void (const Data_Type&)> cell_double_clicked = [] (const Data_Type&) {};
 
-    void select_cell();
+    void select_cell (bool clear_existing_selection = true);
 
     void paint (juce::Graphics& g) override;
     void mouseDown (const juce::MouseEvent&) override;
