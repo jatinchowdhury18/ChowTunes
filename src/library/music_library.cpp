@@ -201,8 +201,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         }
     }
 
-    juce::Thread::launch (
-        [library_ptr, callback, tag_results]() mutable
+        auto results_loader = [library_ptr, callback, tag_results]() mutable
         {
             auto& library = *library_ptr;
             auto last_update_time = std::chrono::steady_clock::now();
@@ -253,8 +252,13 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
             if (callback != nullptr)
                 callback (library, true);
 
-            //    std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
-        });
+            // std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
+        };
+
+    if (callback != nullptr)
+        juce::Thread::launch (results_loader);
+    else
+        results_loader();
 
     return library_ptr;
 }
