@@ -54,7 +54,7 @@ public:
     {
         juce::StringArray args;
         args.addTokens (commandLine, " ", "\"");
-        if (handleInternalCommandLineOperations (commandLine))
+        if (handleInternalCommandLineOperations (args))
         {
             quit();
             return;

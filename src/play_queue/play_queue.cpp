@@ -61,9 +61,9 @@ void Play_Queue::add_to_queue (std::span<const library::Song*> songs_to_add, Add
     queue_changed();
 }
 
-void move_song_up (std::vector<const library::Song*>& queue,
-                   const library::Song* song,
-                   int& playing_idx)
+static void move_song_up (std::vector<const library::Song*>& queue,
+                          const library::Song* song,
+                          int& playing_idx)
 {
     auto song_iter = std::find (queue.begin(), queue.end(), song);
     if (song_iter == queue.begin() || song_iter == queue.end())
@@ -78,9 +78,9 @@ void move_song_up (std::vector<const library::Song*>& queue,
     std::rotate (song_iter - 1, song_iter, song_iter + 1);
 }
 
-void move_song_down (std::vector<const library::Song*>& queue,
-                     const library::Song* song,
-                     int& playing_idx)
+static void move_song_down (std::vector<const library::Song*>& queue,
+                            const library::Song* song,
+                            int& playing_idx)
 {
     auto song_iter = std::find (queue.begin(), queue.end(), song);
     if (song_iter == queue.end() - 1 || song_iter == queue.end())

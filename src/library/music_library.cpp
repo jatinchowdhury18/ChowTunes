@@ -9,7 +9,7 @@ JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarat
 
 namespace chow_tunes::library
 {
-static std::u8string_view to_u8string_view (chowdsp::StackAllocator& alloc, const TagLib::String& str)
+static std::u8string_view to_u8string_view (chowdsp::ArenaAllocator<>& alloc, const TagLib::String& str)
 {
     const auto str_view_start = alloc.data<char8_t> (alloc.get_bytes_used());
     char8_t* str_view_end = nullptr;
@@ -36,7 +36,7 @@ static bool equals_ignore_case (const std::u8string_view& lhs, const std::u8stri
 }
 
 template <typename IntType>
-std::string_view temp_string (chowdsp::StackAllocator& alloc, const char* data, IntType count)
+std::string_view temp_string (chowdsp::ArenaAllocator<>& alloc, const char* data, IntType count)
 {
     auto* t_data = alloc.allocate<char> (count);
     std::copy (data, data + count, t_data);
@@ -44,7 +44,7 @@ std::string_view temp_string (chowdsp::StackAllocator& alloc, const char* data, 
 }
 
 template <size_t N>
-std::string_view temp_string (chowdsp::StackAllocator& alloc, const char (&str)[N])
+std::string_view temp_string (chowdsp::ArenaAllocator<>& alloc, const char (&str)[N])
 {
     // don't copy the null terminator!
     if (str[N - 1] == '\0')
@@ -52,12 +52,12 @@ std::string_view temp_string (chowdsp::StackAllocator& alloc, const char (&str)[
     return temp_string (alloc, std::data (str), std::size (str));
 }
 
-inline std::string_view temp_string (chowdsp::StackAllocator& alloc, std::string_view str)
+inline std::string_view temp_string (chowdsp::ArenaAllocator<>& alloc, std::string_view str)
 {
     return temp_string (alloc, std::data (str), std::size (str));
 }
 
-inline std::u8string_view temp_string (chowdsp::StackAllocator& alloc, std::u8string_view str)
+inline std::u8string_view temp_string (chowdsp::ArenaAllocator<>& alloc, std::u8string_view str)
 {
     auto* t_data = alloc.allocate<char8_t> (str.size());
     std::copy (str.begin(), str.end(), t_data);
@@ -242,8 +242,8 @@ Music_Library index_directory (const std::filesystem::path& path)
 
 std::string print_library (const Music_Library& library)
 {
-    auto& alloc = const_cast<chowdsp::StackAllocator&> (library.stack_data);
-    chowdsp::StackAllocator::StackAllocatorFrame frame { alloc };
+    auto& alloc = library.stack_data;
+    auto frame = alloc.create_frame();
 
     size_t count = 0;
     const auto build_string = [&alloc, &count] (auto&&... args)
