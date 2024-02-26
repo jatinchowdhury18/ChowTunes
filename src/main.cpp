@@ -122,12 +122,11 @@ public:
         if (args.contains ("--play"))
         {
             auto* main = dynamic_cast<chow_tunes::Main_Component*> (mainWindow->getContentComponent());
-            chow_tunes::cli::play_command (args, main->library, main->play_queue);
+            chow_tunes::cli::play_command (args, *main->library, main->play_queue);
             return;
         }
 
-        if (handleInternalCommandLineOperations (args))
-            return;
+        handleInternalCommandLineOperations (args);
     }
 
     bool handleInternalCommandLineOperations (const juce::StringArray& args) // NOLINT
@@ -149,9 +148,9 @@ public:
 
                 //                std::printf ("%s\n", chow_tunes::library::print_library (music_library).c_str());
                 std::printf ("Scanned %d songs, from %d albums, from %d artists, in %d milliseconds\n",
-                             (int) music_library.songs.size(),
-                             (int) music_library.albums.size(),
-                             (int) music_library.artists.size(),
+                             (int) music_library->songs.size(),
+                             (int) music_library->albums.size(),
+                             (int) music_library->artists.size(),
                              (int) chrono::duration_cast<chrono::milliseconds> (duration).count());
 
                 return true;

@@ -43,7 +43,8 @@ struct Music_Library
     std::vector<Artist> artists {};
 };
 
-Music_Library index_directory (const std::filesystem::path& path);
+using Update_Callback = std::function<void(const Music_Library&, bool is_loading_complete)>;
+std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& path, const Update_Callback& callback = {});
 
 std::string print_library (const Music_Library& library);
 } // namespace chow_tunes::library

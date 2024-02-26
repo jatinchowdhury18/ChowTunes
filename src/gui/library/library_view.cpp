@@ -147,14 +147,12 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists, c
     artist_list.update_size();
 }
 
-Library_View::Library_View (const library::Music_Library& lib, play_queue::Play_Queue& _play_queue)
+Library_View::Library_View (play_queue::Play_Queue& _play_queue)
     : play_queue (_play_queue)
 {
     addAndMakeVisible (song_list);
     addAndMakeVisible (album_list);
     addAndMakeVisible (artist_list);
-
-    load_artist_list (lib.artists, lib);
 }
 
 void Library_View::resized()

@@ -29,7 +29,7 @@ inline auto get_album_songs (const library::Album& album, const library::Music_L
 
 struct Library_View : juce::Component
 {
-    Library_View (const library::Music_Library& library, play_queue::Play_Queue& play_queue);
+    explicit Library_View (play_queue::Play_Queue& play_queue);
 
     void resized() override;
 
