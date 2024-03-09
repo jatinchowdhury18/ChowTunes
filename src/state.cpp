@@ -45,6 +45,9 @@ void State::load_state (Main_Component& main)
 
 void State::save_state() const
 {
+    if (library_filepath.get().empty())
+        return;
+
     state_save_path.deleteFile();
     state_save_path.create();
     chowdsp::Serialization::serialize<chowdsp::JSONSerializer> (*this, state_save_path);

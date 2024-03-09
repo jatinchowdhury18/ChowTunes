@@ -1,4 +1,5 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
+#include <chowdsp_logging/chowdsp_logging.h>
 #include <chrono>
 
 #include "gui/gui_resources.h"
@@ -9,7 +10,10 @@
 class ChowTunesApplication : public juce::JUCEApplication
 {
 public:
-    ChowTunesApplication() = default;
+    ChowTunesApplication()
+        : logger { "ChowdhuryDSP/ChowTunes/Logs", "ChowTunes_Log_" }
+    {
+    }
 
     class MainWindow : public juce::DocumentWindow
     {
@@ -162,6 +166,7 @@ public:
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
+    chowdsp::Logger logger;
 };
 
 // This macro generates the main() routine that launches the app.

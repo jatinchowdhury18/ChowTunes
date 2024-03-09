@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.26)
 project(ChowTunes VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
 
-include(cmake/CPM.cmake)
+include(CPM)
 CPMAddPackage(
     NAME juce
     GITHUB_REPOSITORY jatinchowdhury18/juce
@@ -57,6 +58,7 @@ target_sources(ChowTunes
 
         src/audio/audio_player.cpp
         src/audio/audio_player_actions.cpp
+        src/audio/audio_file_reader_ffmpeg.h
 
         src/gui/library/library_view.cpp
         src/gui/library/list_selector.cpp
@@ -68,14 +70,19 @@ target_sources(ChowTunes
         src/gui/play_queue_view.cpp
 )
 
-include(cmake/CMakeRC.cmake)
+include(CMakeRC)
 add_subdirectory(res)
+
+find_package(FFMPEG REQUIRED)
+message(STATUS "Found FFMPEG libs: ${FFMPEG_LIBRARIES}")
+message(STATUS "Found FFMPEG include dirs: ${FFMPEG_INCLUDE_DIR}")
 
 target_link_libraries(ChowTunes
     PRIVATE
         juce::juce_audio_utils
         juce::juce_dsp
         chowdsp::chowdsp_data_structures
+        chowdsp::chowdsp_logging
         chowdsp::chowdsp_buffers
         chowdsp::chowdsp_math
         chowdsp::chowdsp_dsp_utils
@@ -85,6 +92,7 @@ target_link_libraries(ChowTunes
         tag
         samplerate
         chow_tunes::gui-resources
+        ${FFMPEG_LIBRARIES}
     PUBLIC
         juce::juce_recommended_warning_flags
         juce::juce_recommended_config_flags
@@ -114,6 +122,8 @@ target_include_directories(ChowTunes
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v2
         ${taglib_SOURCE_DIR}/taglib/mpeg/id3v2/frames
         ${taglib_SOURCE_DIR}/3rdparty
+
+        ${FFMPEG_INCLUDE_DIR}
 
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

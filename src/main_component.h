@@ -31,6 +31,7 @@ struct Main_Component : juce::Component,
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
     juce::AudioFormatManager audio_format_manager;
 
+    std::once_flag load_state_flag {};
     state::State app_state;
 
     std::shared_ptr<library::Music_Library> library {};

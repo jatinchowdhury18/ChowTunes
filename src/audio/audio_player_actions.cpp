@@ -1,5 +1,6 @@
 #include <chowdsp_plugin_utils/chowdsp_plugin_utils.h>
 
+#include "audio_file_reader_ffmpeg.h"
 #include "audio_player.h"
 #include "audio_player_actions.h"
 #include "library/music_library.h"
@@ -9,22 +10,28 @@ namespace chow_tunes::audio
 {
 Audio_Player_Action create_play_song_action (const library::Song& song)
 {
-    chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
     const auto filepath_str = juce::String::fromUTF8 ((const char*) song.filepath.data(), (int) song.filepath.size());
-    auto [buffer, fs] = audio_file_helper->loadFile (juce::File { filepath_str });
-    if (buffer.getNumSamples() == 0)
+
+    // old way... we can bring this back if there are files that FFMPEG doesn't support
+    // chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
+    // auto [buffer, fs] = audio_file_helper->loadFile (juce::File { filepath_str });
+
+    try
     {
-        jassertfalse;
+        auto [buffer, fs] = ffmpeg_reader::read_file (filepath_str.toStdString());
+        Audio_Player_Action action;
+        action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
+        action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
+        action.action_value = static_cast<double> (fs);
+        return action;
+    }
+    catch (const std::exception& e)
+    {
+        juce::Logger::writeToLog (e.what());
         return {
             .action_type = Audio_Player_Action_Type::Invalid
         };
     }
-
-    Audio_Player_Action action;
-    action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
-    action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
-    action.action_value = fs;
-    return action;
 }
 
 void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
