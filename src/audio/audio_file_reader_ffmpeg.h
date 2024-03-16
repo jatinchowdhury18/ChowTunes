@@ -1,13 +1,16 @@
 #pragma once
 
 #include <string>
+#include <juce_core/juce_core.h>
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wimplicit-int-conversion")
 extern "C"
 {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
 }
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
 #include <chowdsp_core/chowdsp_core.h>
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -40,7 +43,7 @@ static auto read_file (const std::string& file_name)
         });
 
     // Open the file and get format information
-    int error = avformat_open_input (&format_context, file_name.c_str(), nullptr, 0);
+    int error = avformat_open_input (&format_context, file_name.c_str(), nullptr, nullptr);
     if (error != 0)
     {
         av_strerror (error, errbuf, errbuf_size);
