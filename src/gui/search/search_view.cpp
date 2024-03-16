@@ -31,9 +31,8 @@ static void select_cell (List_Selector& list,
     {
         if (cell.data->name == name)
         {
-            auto& cell_component = *list.cell_components.find (cell.component_locator);
-            cell_component->mouseDown (e);
-            list.setViewPosition (cell_component->getBoundsInParent().getTopLeft());
+            cell.component->mouseDown (e);
+            list.setViewPosition (cell.component->getBoundsInParent().getTopLeft());
             break;
         }
     }

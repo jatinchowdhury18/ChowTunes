@@ -20,6 +20,7 @@ namespace chow_tunes::gui
 inline auto get_album_songs (const library::Album& album, const library::Music_Library& library)
 {
     chowdsp::SmallVector<const library::Song*, 20> album_songs;
+    album_songs.reserve(album.song_ids.size());
     for (auto song_id : album.song_ids)
         album_songs.push_back (&library.songs[song_id]);
     std::sort (album_songs.begin(), album_songs.end(), [] (auto& song1, auto& song2)
@@ -37,9 +38,9 @@ struct Library_View : juce::Component
     void load_album_list (std::span<const size_t> album_ids, const library::Music_Library& library);
     void load_song_list (std::span<const size_t> song_ids, const library::Music_Library& library);
 
-    gui::List_Selector<library::Song> song_list;
-    gui::List_Selector<library::Album> album_list;
-    gui::List_Selector<library::Artist> artist_list;
+    List_Selector<library::Song> song_list;
+    List_Selector<library::Album> album_list;
+    List_Selector<library::Artist> artist_list;
 
     play_queue::Play_Queue& play_queue;
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;

@@ -13,7 +13,7 @@ void Play_Queue_List::update_list (const play_queue::Play_Queue& queue)
 
     for (auto [idx, entry] : chowdsp::enumerate (cell_entries))
     {
-        auto* cell = cell_components.find (entry.component_locator)->get();
+        auto* cell = entry.component;
         cell->is_selected = false;
 
         if ((int) idx == queue.currently_playing_song_index)
@@ -41,23 +41,23 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
 
     queue_list.select_on_click = false;
     addAndMakeVisible (queue_list);
-    queue_list.cell_entries.reserve (100);
     queue_change_callback = play_queue.queue_changed.connect (
         [this]
         {
-            queue_list.cell_entries.clear();
-            queue_list.cell_components.reset();
+            queue_list.allocator.clear_all();
+            queue_list.cell_entries = queue_list.allocator.allocate_n<List_Selector<library::Song>::Cell_Entry> (play_queue.queue.size());
+            queue_list.cell_components = queue_list.allocator.allocate_n<Cell_Component<library::Song>> (play_queue.queue.size());
+
             for (auto [idx, song] : chowdsp::enumerate (play_queue.queue))
             {
-                auto& new_cell_entry = queue_list.cell_entries.emplace_back();
+                auto& new_cell_entry = queue_list.cell_entries[idx];
                 new_cell_entry.data = song;
 
-                auto [new_cell_locator, new_cell_ptr] = queue_list.cell_components.emplace();
-                auto* new_cell_component = new_cell_ptr->emplace();
-                new_cell_component->label_text = new_cell_entry.data->name;
+                auto& new_cell_component = queue_list.cell_components[idx];
+                new_cell_component.label_text = new_cell_entry.data->name;
                 if (play_queue.currently_playing_song_index != (int) idx)
                 {
-                    new_cell_component->cell_clicked = [this, i = idx, &e = new_cell_component->latest_mouse_event] (const library::Song&)
+                    new_cell_component.cell_clicked = [this, i = idx, &e = new_cell_component.latest_mouse_event] (const library::Song&)
                     {
                         jassert (e.has_value());
 
@@ -104,7 +104,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                         queue_list.update_list (play_queue);
                         queue_list.repaint();
                     };
-                    new_cell_component->cell_right_clicked = [this, i = idx, selection_logic = new_cell_component->cell_clicked] (const library::Song& selected_song)
+                    new_cell_component.cell_right_clicked = [this, i = idx, selection_logic = new_cell_component.cell_clicked] (const library::Song& selected_song)
                     {
                         selection_logic (selected_song);
 
@@ -156,7 +156,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                     };
                 }
 
-                queue_list.add_cell (new_cell_entry, new_cell_locator, new_cell_component);
+                queue_list.add_cell (new_cell_entry, &new_cell_component);
             }
             queue_list.update_list (play_queue);
             queue_list.update_size();
