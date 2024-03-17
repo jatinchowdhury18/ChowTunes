@@ -201,59 +201,59 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         }
     }
 
-        auto results_loader = [library_ptr, callback, tag_results]() mutable
+    auto results_loader = [library_ptr, callback, tag_results]() mutable
+    {
+        auto& library = *library_ptr;
+        auto last_update_time = std::chrono::steady_clock::now();
+        for (auto& tag_result_future : *tag_results)
         {
-            auto& library = *library_ptr;
-            auto last_update_time = std::chrono::steady_clock::now();
-            for (auto& tag_result_future : *tag_results)
+            const auto [file, tag, file_path, art_path] = tag_result_future.get();
+            if (tag == nullptr)
             {
-                const auto [file, tag, file_path, art_path] = tag_result_future.get();
-                if (tag == nullptr)
-                {
-                    jassertfalse;
-                    continue;
-                }
-
-                const auto title_str = to_u8string_view (library.stack_data, tag->title());
-                const auto album_str = to_u8string_view (library.stack_data, tag->album());
-                const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
-                if (title_str.empty() || album_str.empty() || artist_str.empty())
-                {
-                    continue; // @TODO: figure out what's going on here!
-                }
-
-                if (song_is_already_in_library (library, artist_str, album_str, title_str))
-                    continue;
-
-                const auto song_id = library.songs.size();
-                auto& song = library.songs.emplace_back();
-                song.name = title_str;
-
-                auto& song_artist = get_artist_for_song (library, song, artist_str);
-                auto& song_album = get_album_for_song (library, song, album_str, tag->year(), song_artist);
-                song_album.song_ids.push_back (song_id);
-                song_album.year = tag->year();
-
-                song.track_number = static_cast<int> (tag->track());
-                song.filepath = temp_string (library.stack_data, file_path.u8string());
-                song.artwork_file = temp_string (library.stack_data, art_path.u8string());
-
-                if (callback != nullptr)
-                {
-                    auto now = std::chrono::steady_clock::now();
-                    if (now - last_update_time > std::chrono::milliseconds { 100 })
-                    {
-                        last_update_time = now;
-                        callback (library, false);
-                    }
-                }
+                jassertfalse;
+                continue;
             }
 
-            if (callback != nullptr)
-                callback (library, true);
+            const auto title_str = to_u8string_view (library.stack_data, tag->title());
+            const auto album_str = to_u8string_view (library.stack_data, tag->album());
+            const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
+            if (title_str.empty() || album_str.empty() || artist_str.empty())
+            {
+                continue; // @TODO: figure out what's going on here!
+            }
 
-            // std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
-        };
+            if (song_is_already_in_library (library, artist_str, album_str, title_str))
+                continue;
+
+            const auto song_id = library.songs.size();
+            auto& song = library.songs.emplace_back();
+            song.name = title_str;
+
+            auto& song_artist = get_artist_for_song (library, song, artist_str);
+            auto& song_album = get_album_for_song (library, song, album_str, tag->year(), song_artist);
+            song_album.song_ids.push_back (song_id);
+            song_album.year = tag->year();
+
+            song.track_number = static_cast<int> (tag->track());
+            song.filepath = temp_string (library.stack_data, file_path.u8string());
+            song.artwork_file = temp_string (library.stack_data, art_path.u8string());
+
+            if (callback != nullptr)
+            {
+                auto now = std::chrono::steady_clock::now();
+                if (now - last_update_time > std::chrono::milliseconds { 100 })
+                {
+                    last_update_time = now;
+                    callback (library, false);
+                }
+            }
+        }
+
+        if (callback != nullptr)
+            callback (library, true);
+
+        // std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
+    };
 
     if (callback != nullptr)
         juce::Thread::launch (results_loader);

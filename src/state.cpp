@@ -11,23 +11,26 @@ void State::load_state (Main_Component& main)
         [this, &main]()
         {
             main.play_queue.clear_queue();
-            main.library = library::index_directory (
-                library_filepath.get(),
-                [&main] (const library::Music_Library& library, bool is_loading_complete)
-                {
-                    juce::MessageManager::callAsync ([&main, &library, is_loading_complete]()
+            juce::Thread::launch ([this, &main]
+            {
+                main.library = library::index_directory (
+                    library_filepath.get(),
+                    [&main] (const library::Music_Library& library, bool is_loading_complete)
                     {
-                        main.library_view.load_song_list ({}, library);
-                        main.library_view.load_album_list ({}, library);
-                        main.library_view.load_artist_list (library.artists, library);
-
-                        if (is_loading_complete)
+                        juce::MessageManager::callAsync ([&main, &library, is_loading_complete]()
                         {
-                            main.transport_view.library = main.library.get();
-                            main.search_view.initialize_search_database (*main.library, main.library_view);
-                        }
+                            main.library_view.load_song_list ({}, library);
+                            main.library_view.load_album_list ({}, library);
+                            main.library_view.load_artist_list (library.artists, library);
+
+                            if (is_loading_complete)
+                            {
+                                main.transport_view.library = main.library.get();
+                                main.search_view.initialize_search_database (*main.library, main.library_view);
+                            }
+                        });
                     });
-                });
+            });
         });
     volume_db.changeBroadcaster.connect (
         [this, &main]()
