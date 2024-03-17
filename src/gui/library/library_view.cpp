@@ -48,28 +48,27 @@ void Library_View::load_song_list (std::span<const size_t> song_ids, const libra
     song_list.allocator.clear_all();
 
     song_list.cell_entries = song_list.allocator.allocate_n<List_Selector<library::Song>::Cell_Entry> (num_cells);
-    song_list.cell_components = song_list.allocator.allocate_n<Cell_Component<library::Song>> (num_cells);
 
-    for (auto [idx, song_id] : chowdsp::enumerate (song_ids))
+    for (const auto& [idx, song_id] : chowdsp::enumerate (song_ids))
     {
         auto& new_cell_entry = song_list.cell_entries[idx];
         new_cell_entry.data = &library.songs[song_id];
 
-        auto& new_cell_component = song_list.cell_components[idx];
-        new_cell_component.label_text = new_cell_entry.data->name;
-        new_cell_component.cell_double_clicked = [this] (const library::Song& selected_song)
+        auto* new_cell_component = song_list.allocator.allocate<Cell_Component<library::Song>>();
+        new_cell_component->label_text = new_cell_entry.data->name;
+        new_cell_component->cell_double_clicked = [this] (const library::Song& selected_song)
         {
             std::array<const library::Song*, 1> songs { &selected_song };
             play_queue.add_to_queue (songs, Queue_Action::Play_Now);
         };
-        new_cell_component.cell_right_clicked = [this] (const library::Song& selected_song)
+        new_cell_component->cell_right_clicked = [this] (const library::Song& selected_song)
         {
             juce::PopupMenu menu;
             setup_play_menu (menu, play_queue, [&selected_song]
                              { return std::array<const library::Song*, 1> { &selected_song }; });
             menu.showMenuAsync (juce::PopupMenu::Options {});
         };
-        song_list.add_cell (new_cell_entry, &new_cell_component);
+        song_list.add_cell (new_cell_entry, new_cell_component);
     }
     std::sort (song_list.cell_entries.begin(), song_list.cell_entries.end(), [] (auto& song_cell1, auto& song_cell2)
                { return song_cell1.data->track_number < song_cell2.data->track_number; });
@@ -83,27 +82,26 @@ void Library_View::load_album_list (std::span<const size_t> album_ids, const lib
     album_list.allocator.clear_all();
 
     album_list.cell_entries = album_list.allocator.allocate_n<List_Selector<library::Album>::Cell_Entry> (num_cells);
-    album_list.cell_components = album_list.allocator.allocate_n<Cell_Component<library::Album>> (num_cells);
 
-    for (auto [idx, album_id] : chowdsp::enumerate (album_ids))
+    for (const auto& [idx, album_id] : chowdsp::enumerate (album_ids))
     {
         auto& new_cell_entry = album_list.cell_entries[idx];
         new_cell_entry.data = &library.albums[album_id];
 
-        auto& new_cell_component = album_list.cell_components[idx];
-        new_cell_component.label_text = new_cell_entry.data->name;
-        new_cell_component.cell_clicked = [this, &library] (const library::Album& album_selected)
+        auto* new_cell_component = album_list.allocator.allocate<Cell_Component<library::Album>>();
+        new_cell_component->label_text = new_cell_entry.data->name;
+        new_cell_component->cell_clicked = [this, &library] (const library::Album& album_selected)
         {
             load_song_list (album_selected.song_ids, library);
         };
-        new_cell_component.cell_double_clicked = [this, &library] (const library::Album& album_selected)
+        new_cell_component->cell_double_clicked = [this, &library] (const library::Album& album_selected)
         {
             load_song_list (album_selected.song_ids, library);
 
             auto album_songs = get_album_songs (album_selected, library);
             play_queue.add_to_queue (album_songs, Queue_Action::Play_Now);
         };
-        new_cell_component.cell_right_clicked = [this, &library] (const library::Album& album_selected)
+        new_cell_component->cell_right_clicked = [this, &library] (const library::Album& album_selected)
         {
             load_song_list (album_selected.song_ids, library);
 
@@ -112,7 +110,7 @@ void Library_View::load_album_list (std::span<const size_t> album_ids, const lib
                              { return get_album_songs (album_selected, library); });
             menu.showMenuAsync (juce::PopupMenu::Options {});
         };
-        album_list.add_cell (new_cell_entry, &new_cell_component);
+        album_list.add_cell (new_cell_entry, new_cell_component);
     }
     std::sort (album_list.cell_entries.begin(), album_list.cell_entries.end(), [] (auto& album_cell1, auto& album_cell2)
                { return album_cell1.data->year < album_cell2.data->year; });
@@ -125,21 +123,20 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists, c
     artist_list.allocator.clear_all();
 
     artist_list.cell_entries = artist_list.allocator.allocate_n<List_Selector<library::Artist>::Cell_Entry> (num_cells);
-    artist_list.cell_components = artist_list.allocator.allocate_n<Cell_Component<library::Artist>> (num_cells);
 
     for (const auto& [idx, artist] : chowdsp::enumerate (artists))
     {
         auto& new_cell_entry = artist_list.cell_entries[idx];
         new_cell_entry.data = &artist;
 
-        auto& new_cell_component = artist_list.cell_components[idx];
-        new_cell_component.label_text = new_cell_entry.data->name;
-        new_cell_component.cell_clicked = [this, &library] (const library::Artist& artist_selected)
+        auto* new_cell_component = artist_list.allocator.allocate<Cell_Component<library::Artist>>();
+        new_cell_component->label_text = new_cell_entry.data->name;
+        new_cell_component->cell_clicked = [this, &library] (const library::Artist& artist_selected)
         {
             load_song_list ({}, library);
             load_album_list (artist_selected.album_ids, library);
         };
-        artist_list.add_cell (new_cell_entry, &new_cell_component);
+        artist_list.add_cell (new_cell_entry, new_cell_component);
     }
     std::sort (artist_list.cell_entries.begin(),
                artist_list.cell_entries.end(),

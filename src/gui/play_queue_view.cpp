@@ -46,18 +46,17 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
         {
             queue_list.allocator.clear_all();
             queue_list.cell_entries = queue_list.allocator.allocate_n<List_Selector<library::Song>::Cell_Entry> (play_queue.queue.size());
-            queue_list.cell_components = queue_list.allocator.allocate_n<Cell_Component<library::Song>> (play_queue.queue.size());
 
-            for (auto [idx, song] : chowdsp::enumerate (play_queue.queue))
+            for (const auto& [idx, song] : chowdsp::enumerate (play_queue.queue))
             {
                 auto& new_cell_entry = queue_list.cell_entries[idx];
                 new_cell_entry.data = song;
 
-                auto& new_cell_component = queue_list.cell_components[idx];
-                new_cell_component.label_text = new_cell_entry.data->name;
+                auto* new_cell_component = queue_list.allocator.allocate<Cell_Component<library::Song>>();
+                new_cell_component->label_text = new_cell_entry.data->name;
                 if (play_queue.currently_playing_song_index != (int) idx)
                 {
-                    new_cell_component.cell_clicked = [this, i = idx, &e = new_cell_component.latest_mouse_event] (const library::Song&)
+                    new_cell_component->cell_clicked = [this, i = idx, &e = new_cell_component->latest_mouse_event] (const library::Song&)
                     {
                         jassert (e.has_value());
 
@@ -104,7 +103,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                         queue_list.update_list (play_queue);
                         queue_list.repaint();
                     };
-                    new_cell_component.cell_right_clicked = [this, i = idx, selection_logic = new_cell_component.cell_clicked] (const library::Song& selected_song)
+                    new_cell_component->cell_right_clicked = [this, i = idx, selection_logic = new_cell_component->cell_clicked] (const library::Song& selected_song)
                     {
                         selection_logic (selected_song);
 
@@ -156,7 +155,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                     };
                 }
 
-                queue_list.add_cell (new_cell_entry, &new_cell_component);
+                queue_list.add_cell (new_cell_entry, new_cell_component);
             }
             queue_list.update_list (play_queue);
             queue_list.update_size();

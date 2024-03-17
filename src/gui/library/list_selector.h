@@ -7,7 +7,7 @@ namespace chow_tunes::gui
 {
 struct Component_Arena
 {
-    static constexpr size_t arena_size_bytes = 1 << 16;
+    static constexpr size_t arena_size_bytes = 8192;
     chowdsp::ChainedArenaAllocator<std::array<std::byte, arena_size_bytes>> arena {};
 
     chowdsp::SmallVector<juce::Component*, 200> component_list {};
@@ -81,7 +81,6 @@ struct List_Selector : juce::Viewport
     } internal;
 
     std::span<Cell_Entry> cell_entries;
-    std::span<Cell_Component> cell_components;
     Component_Arena allocator;
 
     bool select_on_click = true;
