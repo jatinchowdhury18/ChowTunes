@@ -11,26 +11,35 @@ void State::load_state (Main_Component& main)
         [this, &main]()
         {
             main.play_queue.clear_queue();
-            juce::Thread::launch ([this, &main]
-            {
-                main.library = library::index_directory (
-                    library_filepath.get(),
-                    [&main] (const library::Music_Library& library, bool is_loading_complete)
-                    {
-                        juce::MessageManager::callAsync ([&main, &library, is_loading_complete]()
+            juce::Thread::launch (
+                [this, &main, start = std::chrono::steady_clock::now()]
+                {
+                    main.library = library::index_directory (
+                        library_filepath.get(),
+                        [&main, start] (const library::Music_Library& library, bool is_loading_complete)
                         {
-                            main.library_view.load_song_list ({}, library);
-                            main.library_view.load_album_list ({}, library);
-                            main.library_view.load_artist_list (library.artists, library);
+                            juce::MessageManager::callAsync (
+                                [&main, &library, is_loading_complete, start]()
+                                {
+                                    main.library_view.load_song_list ({}, library);
+                                    main.library_view.load_album_list ({}, library);
+                                    main.library_view.load_artist_list (library.artists, library);
 
-                            if (is_loading_complete)
-                            {
-                                main.transport_view.library = main.library.get();
-                                main.search_view.initialize_search_database (*main.library, main.library_view);
-                            }
+                                    if (is_loading_complete)
+                                    {
+                                        main.transport_view.library = main.library.get();
+                                        main.search_view.initialize_search_database (*main.library, main.library_view);
+
+                                        const auto duration = std::chrono::high_resolution_clock::now() - start;
+                                        juce::Logger::writeToLog (std::format ("Scanned {:d} songs, from {:d} albums, from {:d} artists, in {:d} milliseconds",
+                                                                               (int) main.library->songs.size(),
+                                                                               (int) main.library->albums.size(),
+                                                                               (int) main.library->artists.size(),
+                                                                               (int) std::chrono::duration_cast<std::chrono::milliseconds> (duration).count()));
+                                    }
+                                });
                         });
-                    });
-            });
+                });
         });
     volume_db.changeBroadcaster.connect (
         [this, &main]()
