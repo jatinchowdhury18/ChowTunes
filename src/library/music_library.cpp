@@ -187,9 +187,17 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
                 {
                     TagLib::FileRef file { file_path.c_str() };
 
-                    auto potential_artwork_file = file_path.parent_path() / "cover.jpg";
-                    if (! std::filesystem::exists (potential_artwork_file))
-                        potential_artwork_file = std::filesystem::path {};
+                    const auto potential_artwork_file = [&file_path]() -> std::filesystem::path
+                    {
+                        for (const auto& test_art_file :
+                             std::initializer_list<std::string_view> { "cover.jpg", "Folder.jpg" })
+                        {
+                            auto artwork_file = file_path.parent_path() / test_art_file;
+                            if (std::filesystem::exists (artwork_file))
+                                return artwork_file;
+                        }
+                        return {};
+                    }();
 
                     return {
                         .file = file,
