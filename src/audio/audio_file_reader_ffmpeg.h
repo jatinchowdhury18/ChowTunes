@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <juce_core/juce_core.h>
+#include <string>
 
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wsign-conversion", "-Wimplicit-int-conversion")
 extern "C"
@@ -196,7 +196,8 @@ static auto read_file (const std::string& file_name)
             const auto out_frame = chowdsp::BufferView {
                 audio,
                 static_cast<int> (sample_counter),
-                frame->nb_samples,
+                static_cast<int> (std::min ((int64_t) frame->nb_samples,
+                                            (int64_t) audio.getNumSamples() - sample_counter))
             };
             if ((error = swr_convert (resample_context,
                                       const_cast<uint8_t**> (reinterpret_cast<uint8_t* const*> (out_frame.getArrayOfWritePointers())),
@@ -209,20 +210,6 @@ static auto read_file (const std::string& file_name)
                 throw std::runtime_error (
                     "Could not resample frame for file: " + file_name + "\n" + "Error: " + std::string (errbuf));
             }
-
-            // // Send the frame to the resampler
-            // const auto frame_data = reinterpret_cast<double**> (frame->extended_data);
-            //
-            // // Update the frame
-            // for (int channel = 0; channel < audio.getNumChannels(); ++channel)
-            // {
-            //     for (int n = 0; n < frame->nb_samples; ++n)
-            //     {
-            //         const auto sample = frame_data[channel][n]; //[audio.getNumChannels() * n + channel];
-            //         jassert (! std::isnan (sample));
-            //         // audio_data[channel][sample_counter + n] = static_cast<float> (sample);
-            //     }
-            // }
 
             // Increment the stamp
             sample_counter += frame->nb_samples;
