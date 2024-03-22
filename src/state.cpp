@@ -1,6 +1,8 @@
 #include "state.h"
 #include "main_component.h"
 
+#include <chowdsp_logging/third_party/spdlog/include/spdlog/fmt/bundled/format.h>
+
 namespace chow_tunes::state
 {
 const auto state_save_path = juce::File { juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("ChowdhuryDSP/ChowTunes/app_state.json") };
@@ -31,7 +33,7 @@ void State::load_state (Main_Component& main)
                                         main.search_view.initialize_search_database (*main.library, main.library_view);
 
                                         const auto duration = std::chrono::high_resolution_clock::now() - start;
-                                        juce::Logger::writeToLog (std::format ("Scanned {:d} songs, from {:d} albums, from {:d} artists, in {:d} milliseconds",
+                                        juce::Logger::writeToLog (fmt::format ("Scanned {:d} songs, from {:d} albums, from {:d} artists, in {:d} milliseconds",
                                                                                (int) main.library->songs.size(),
                                                                                (int) main.library->albums.size(),
                                                                                (int) main.library->artists.size(),
