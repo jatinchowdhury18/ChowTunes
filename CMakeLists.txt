@@ -89,6 +89,7 @@ target_link_libraries(ChowTunes
         chowdsp::chowdsp_sources
         chowdsp::chowdsp_plugin_utils
         chowdsp::chowdsp_plugin_state
+        chowdsp::chowdsp_fuzzy_search
         tag
         samplerate
         chow_tunes::gui-resources

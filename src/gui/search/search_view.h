@@ -1,8 +1,8 @@
 #pragma once
 
-#include "fuzzy_search_database.h"
 #include "gui/library/library_view.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <chowdsp_fuzzy_search/chowdsp_fuzzy_search.h>
 
 namespace chow_tunes::library
 {
@@ -36,6 +36,6 @@ struct Search_View : juce::Component
         Artist,
         Album,
     };
-    fuzzysearch::Database<std::pair<Search_Result_Type, int>> search_database;
+    chowdsp::SearchDatabase<std::pair<Search_Result_Type, int>> search_database;
 };
 } // namespace chow_tunes::gui

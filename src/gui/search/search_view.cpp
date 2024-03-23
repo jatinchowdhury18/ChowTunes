@@ -59,21 +59,22 @@ Search_View::Search_View()
 
 void Search_View::initialize_search_database (library::Music_Library& library, Library_View& library_view)
 {
-    search_database.reset();
+    search_database.resetEntries (library.artists.size() + library.albums.size(), 10'000);
     search_database.setThreshold (0.5f);
 
     namespace chrono = std::chrono;
-    for (auto [idx, artist] : chowdsp::enumerate (library.artists))
+    for (const auto& [idx, artist] : chowdsp::enumerate (library.artists))
         search_database.addEntry (std::make_pair (Search_Result_Type::Artist, (int) idx),
-                                  { std::u8string { artist.name } });
-    for (auto [idx, album] : chowdsp::enumerate (library.albums))
+                                  { std::string_view { reinterpret_cast<const char*> (artist.name.data()), artist.name.size() } });
+    for (const auto& [idx, album] : chowdsp::enumerate (library.albums))
         search_database.addEntry (std::make_pair (Search_Result_Type::Album, (int) idx),
-                                  { std::u8string { album.name } });
+                                  { std::string_view { reinterpret_cast<const char*> (album.name.data()), album.name.size() } });
+    search_database.prepareForSearch();
 
     search_entry.onTextChange = [this, &library, &library_view]
     {
         const auto search_text = search_entry.getText();
-        const auto search_results = search_database.search (std::u8string { reinterpret_cast<const char8_t*> (search_text.toRawUTF8()) });
+        const auto search_results = search_database.search ({ search_text.toRawUTF8(), search_text.getNumBytesAsUTF8() });
 
         for (auto [result, label] : chowdsp::zip (search_results, results))
         {
