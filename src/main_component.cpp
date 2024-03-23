@@ -13,6 +13,10 @@ Main_Component::Main_Component()
 
     play_queue.action_router = &action_router;
 
+    app_state.load_state (*this);
+    if (app_state.library_filepath.get().empty())
+        app_state.select_library_folder();
+
     addAndMakeVisible (library_view);
     addAndMakeVisible (transport_view);
     addAndMakeVisible (play_queue_view);
@@ -30,19 +34,6 @@ Main_Component::~Main_Component()
 void Main_Component::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colours::black);
-
-    // wait until we're painting the UI before loading the app state
-    std::call_once (load_state_flag,
-                    [this]
-                    {
-                        juce::MessageManager::callAsync (
-                            [this]
-                            {
-                                app_state.load_state (*this);
-                                if (app_state.library_filepath.get().empty())
-                                    app_state.select_library_folder();
-                            });
-                    });
 }
 
 void Main_Component::resized()
