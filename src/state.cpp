@@ -1,7 +1,6 @@
+#include <chowdsp_logging/chowdsp_logging.h>
 #include "state.h"
 #include "main_component.h"
-
-#include <chowdsp_logging/third_party/spdlog/include/spdlog/fmt/bundled/format.h>
 
 namespace chow_tunes::state
 {
