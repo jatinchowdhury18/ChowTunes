@@ -9,6 +9,7 @@ List_Selector<Cell_Data>::List_Selector()
 {
     internal.parent = this;
     setViewedComponent (&internal, false);
+    setScrollBarsShown (true, false);
 }
 
 template <typename Cell_Data>
