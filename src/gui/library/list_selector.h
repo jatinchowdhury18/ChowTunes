@@ -2,56 +2,10 @@
 
 #include "library/music_library.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <chowdsp_gui/chowdsp_gui.h>
 
 namespace chow_tunes::gui
 {
-struct Component_Arena
-{
-    static constexpr size_t arena_size_bytes = 8192;
-    chowdsp::ChainedArenaAllocator<std::array<std::byte, arena_size_bytes>> arena {};
-
-    chowdsp::SmallVector<juce::Component*, 200> component_list {};
-
-    ~Component_Arena()
-    {
-        clear_all();
-    }
-
-    template <typename T, typename... Args>
-    T* allocate (Args&&... args)
-    {
-        auto* bytes = arena.allocate_bytes (sizeof (T), alignof (T));
-        auto* new_component = new (bytes) T { std::forward<Args> (args)... };
-
-        if constexpr (std::is_base_of_v<juce::Component, T>)
-            component_list.emplace_back (new_component);
-
-        return new_component;
-    }
-
-    template <typename T, typename... Args>
-    std::span<T> allocate_n (size_t n, Args&&... args)
-    {
-        auto* bytes = arena.allocate_bytes (sizeof (T) * n, alignof (T));
-        auto span = std::span<T> { reinterpret_cast<T*> (bytes), n };
-        for (auto& ptr : span)
-        {
-            auto* new_component = new (&ptr) T { std::forward<Args> (args)... };
-            if constexpr (std::is_base_of_v<juce::Component, T>)
-                component_list.emplace_back (new_component);
-        }
-        return span;
-    }
-
-    void clear_all()
-    {
-        for (auto* c : component_list)
-            c->~Component();
-        component_list.clear();
-        arena.clear();
-    }
-};
-
 template <typename Cell_Data>
 struct Cell_Component;
 
@@ -81,7 +35,7 @@ struct List_Selector : juce::Viewport
     } internal;
 
     std::span<Cell_Entry> cell_entries;
-    Component_Arena allocator;
+    chowdsp::ComponentArena<8192, 200> allocator;
 
     bool select_on_click = true;
 };

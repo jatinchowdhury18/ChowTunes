@@ -34,6 +34,7 @@ target_compile_options(tag
         -Wno-old-style-cast -Wno-atomic-implicit-seq-cst -Wno-shorten-64-to-32
         -Wno-unused-parameter -Wno-missing-variable-declarations -Wno-format-nonliteral -Wno-deprecated-dynamic-exception-spec
         -Wno-implicit-fallthrough -Wno-covered-switch-default -Wno-unreachable-code-loop-increment
+        -Wno-unsafe-buffer-usage
 )
 CPMAddPackage(
     NAME samplerate
@@ -90,6 +91,7 @@ target_link_libraries(ChowTunes
         chowdsp::chowdsp_plugin_utils
         chowdsp::chowdsp_plugin_state
         chowdsp::chowdsp_fuzzy_search
+        chowdsp::chowdsp_gui
         tag
         samplerate
         chow_tunes::gui-resources
