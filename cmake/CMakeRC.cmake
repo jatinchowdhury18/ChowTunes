@@ -405,8 +405,7 @@ if(EXISTS "${cmrc_hpp}")
 endif()
 file(GENERATE OUTPUT "${cmrc_hpp}" CONTENT "${hpp_content}" CONDITION ${_generate})
 
-add_library(cmrc-base INTERFACE
-    ../../../JUCE_modules/chowdsp_utils/modules/common/chowdsp_core/Memory/chowdsp_AlignedAlloc.h)
+add_library(cmrc-base INTERFACE)
 target_include_directories(cmrc-base INTERFACE $<BUILD_INTERFACE:${CMRC_INCLUDE_DIR}>)
 # Signal a basic C++11 feature to require C++11.
 target_compile_features(cmrc-base INTERFACE cxx_nullptr)

@@ -32,6 +32,7 @@ struct Library_View : juce::Component
 {
     explicit Library_View (play_queue::Play_Queue& play_queue);
 
+    void paint (juce::Graphics& g) override;
     void resized() override;
 
     void load_artist_list (std::span<const library::Artist> artists, const library::Music_Library& library);
@@ -41,6 +42,7 @@ struct Library_View : juce::Component
     List_Selector<library::Song> song_list;
     List_Selector<library::Album> album_list;
     List_Selector<library::Artist> artist_list;
+    int song_list_length_seconds {};
 
     play_queue::Play_Queue& play_queue;
     chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;

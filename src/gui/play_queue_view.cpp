@@ -1,4 +1,5 @@
 #include "play_queue_view.h"
+#include <chowdsp_logging/chowdsp_logging.h>
 
 namespace chow_tunes::gui
 {
@@ -11,6 +12,8 @@ void Play_Queue_List::update_list (const play_queue::Play_Queue& queue)
         selected_cell_idxs.clear();
     }
 
+    elapsed_length_seconds = 0;
+    queue_length_seconds = 0;
     for (auto [idx, entry] : chowdsp::enumerate (cell_entries))
     {
         auto* cell = entry.component;
@@ -27,6 +30,10 @@ void Play_Queue_List::update_list (const play_queue::Play_Queue& queue)
             cell->select_cell (false);
             cell->selection_fill_colour = juce::Colours::orange.withAlpha (0.5f);
         }
+
+        queue_length_seconds += cell->data->track_length_seconds;
+        if ((int) idx < queue.currently_playing_song_index)
+            elapsed_length_seconds += cell->data->track_length_seconds;
     }
 }
 
@@ -101,7 +108,7 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                         }
 
                         queue_list.update_list (play_queue);
-                        queue_list.repaint();
+                        repaint();
                     };
                     new_cell_component->cell_right_clicked = [this, i = idx, selection_logic = new_cell_component->cell_clicked] (const library::Song& selected_song)
                     {
@@ -159,13 +166,32 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
             }
             queue_list.update_list (play_queue);
             queue_list.update_size();
+            repaint();
         });
+}
+
+constexpr int footer_item_height = 30;
+void Play_Queue_View::paint (juce::Graphics& g)
+{
+    auto bounds = getLocalBounds();
+    bounds.removeFromBottom (footer_item_height);
+    const auto label_bounds = bounds.removeFromBottom (footer_item_height);
+    g.setColour (juce::Colours::grey);
+    g.drawFittedText (fmt::format ("{:02d}:{:02d} || {:02d}:{:02d}",
+                                   queue_list.elapsed_length_seconds / 60,
+                                   queue_list.elapsed_length_seconds % 60,
+                                   queue_list.queue_length_seconds / 60,
+                                   queue_list.queue_length_seconds % 60),
+                      label_bounds,
+                      juce::Justification::left,
+                      1);
 }
 
 void Play_Queue_View::resized()
 {
     auto bounds = getLocalBounds();
-    clear_queue_button.setBounds (bounds.removeFromBottom (30));
+    clear_queue_button.setBounds (bounds.removeFromBottom (footer_item_height));
+    bounds.removeFromBottom (footer_item_height);
     queue_list.setBounds (bounds);
 }
 } // namespace chow_tunes::gui

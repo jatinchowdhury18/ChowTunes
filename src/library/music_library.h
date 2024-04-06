@@ -32,6 +32,7 @@ struct Song
     std::u8string_view filepath {};
     int track_number = -1; // starts indexing at 0, -1 is "invalid"
     std::u8string_view artwork_file {};
+    int track_length_seconds = 0;
 };
 
 struct Music_Library

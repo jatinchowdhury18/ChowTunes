@@ -1,5 +1,5 @@
 #include <chowdsp_data_structures/chowdsp_data_structures.h>
-#include <sstream>
+#include <chowdsp_logging/chowdsp_logging.h>
 
 #include "audio/audio_player.h"
 #include "transport_timeline.h"
@@ -27,16 +27,19 @@ void Transport_Timeline::update()
         return result;
     };
 
-
     if (auto& player_opt = *player; player_opt.has_value())
     {
         needs_repaint |= compare_exchange (play_percent, player_opt->get_song_progress_percent());
         needs_repaint |= compare_exchange (playing_seconds, player_opt->get_seconds_played());
+
+        const auto player_song_length_seconds = static_cast<double> (player_opt->song_length_samples.load()) / static_cast<double> (player_opt->song_sample_rate.load());
+        needs_repaint |= compare_exchange (song_length_seconds, static_cast<size_t> (player_song_length_seconds));
     }
     else
     {
         needs_repaint |= compare_exchange (play_percent, 0.0);
         needs_repaint |= compare_exchange (playing_seconds, (size_t) 0);
+        needs_repaint |= compare_exchange (song_length_seconds, (size_t) 0);
     }
 }
 
@@ -56,20 +59,22 @@ void Transport_Timeline::paint (juce::Graphics& g)
     g.setColour (juce::Colours::red.darker (0.1f));
     g.fillEllipse (juce::Rectangle { 10.0f, 10.0f }.withCentre ({ thumb_x, 7.5f }));
 
-    const auto time_str = [this] () -> std::string
-    {
-        const auto minutes_to_show = playing_seconds / 60;
-        const auto seconds_to_show = playing_seconds % 60;
-
-        std::stringstream ss;
-        ss << std::internal << std::setfill('0') << std::setw(2) << minutes_to_show;
-        ss << ':';
-        ss << std::internal << std::setfill('0') << std::setw(2) << seconds_to_show;
-        return ss.str();
-    }();
-
     g.setColour (juce::Colours::white);
-    g.drawFittedText (time_str, local_bounds, juce::Justification::left, 1);
+    g.drawFittedText (fmt::format ("{:02d}:{:02d}",
+                                   playing_seconds / 60,
+                                   playing_seconds % 60),
+                      local_bounds,
+                      juce::Justification::left,
+                      1);
+
+    g.drawFittedText (fmt::format ("{:02d}:{:02d} || {:02d}:{:02d}",
+                                   playing_seconds / 60,
+                                   playing_seconds % 60,
+                                   song_length_seconds / 60,
+                                   song_length_seconds % 60),
+                      local_bounds,
+                      juce::Justification::left,
+                      1);
 }
 
 void Transport_Timeline::mouseDrag (const juce::MouseEvent& e)

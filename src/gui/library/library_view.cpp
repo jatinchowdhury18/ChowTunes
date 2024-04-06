@@ -1,5 +1,6 @@
 #include "library_view.h"
 #include "play_queue/play_queue.h"
+#include <chowdsp_logging/chowdsp_logging.h>
 
 namespace chow_tunes::gui
 {
@@ -46,13 +47,16 @@ void Library_View::load_song_list (std::span<const size_t> song_ids, const libra
     const auto num_cells = song_ids.size();
 
     song_list.allocator.clear_all();
-
     song_list.cell_entries = song_list.allocator.allocate_n<List_Selector<library::Song>::Cell_Entry> (num_cells);
+    song_list_length_seconds = 0;
 
     for (const auto& [idx, song_id] : chowdsp::enumerate (song_ids))
     {
+        const auto& song = library.songs[song_id];
+        song_list_length_seconds += song.track_length_seconds;
+
         auto& new_cell_entry = song_list.cell_entries[idx];
-        new_cell_entry.data = &library.songs[song_id];
+        new_cell_entry.data = &song;
 
         auto* new_cell_component = song_list.allocator.allocate<Cell_Component<library::Song>>();
         new_cell_component->label_text = new_cell_entry.data->name;
@@ -73,6 +77,7 @@ void Library_View::load_song_list (std::span<const size_t> song_ids, const libra
     std::sort (song_list.cell_entries.begin(), song_list.cell_entries.end(), [] (auto& song_cell1, auto& song_cell2)
                { return song_cell1.data->track_number < song_cell2.data->track_number; });
     song_list.update_size();
+    repaint();
 }
 
 void Library_View::load_album_list (std::span<const size_t> album_ids, const library::Music_Library& library)
@@ -115,6 +120,7 @@ void Library_View::load_album_list (std::span<const size_t> album_ids, const lib
     std::sort (album_list.cell_entries.begin(), album_list.cell_entries.end(), [] (auto& album_cell1, auto& album_cell2)
                { return album_cell1.data->year < album_cell2.data->year; });
     album_list.update_size();
+    repaint();
 }
 
 void Library_View::load_artist_list (std::span<const library::Artist> artists, const library::Music_Library& library)
@@ -150,6 +156,7 @@ void Library_View::load_artist_list (std::span<const library::Artist> artists, c
                    return artist_cell1.data->name < artist_cell2.data->name;
                });
     artist_list.update_size();
+    repaint();
 }
 
 Library_View::Library_View (play_queue::Play_Queue& _play_queue)
@@ -160,9 +167,33 @@ Library_View::Library_View (play_queue::Play_Queue& _play_queue)
     addAndMakeVisible (artist_list);
 }
 
+constexpr int footer_height = 30;
+void Library_View::paint (juce::Graphics& g)
+{
+    g.setColour (juce::Colours::grey.brighter (0.1f));
+    auto bounds = getLocalBounds();
+    auto label_bounds = bounds.removeFromBottom (footer_height);
+
+    const auto artist_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
+    g.drawFittedText (fmt::format ("{} Artists", artist_list.cell_entries.size()), artist_label_bounds, juce::Justification::left, 1);
+
+    const auto album_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
+    g.drawFittedText (fmt::format ("{} Albums", album_list.cell_entries.size()), album_label_bounds, juce::Justification::left, 1);
+
+    const auto song_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
+    g.drawFittedText (fmt::format ("{} Songs || {:02d}:{:02d}",
+                                   song_list.cell_entries.size(),
+                                   song_list_length_seconds / 60,
+                                   song_list_length_seconds % 60),
+                      song_label_bounds,
+                      juce::Justification::left,
+                      1);
+}
+
 void Library_View::resized()
 {
     auto bounds = getLocalBounds();
+    bounds.removeFromBottom (footer_height);
 
     artist_list.setBounds (bounds.removeFromLeft (proportionOfWidth (0.33f)));
     album_list.setBounds (bounds.removeFromLeft (proportionOfWidth (0.33f)));

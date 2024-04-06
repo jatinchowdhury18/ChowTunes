@@ -255,6 +255,8 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
             song.track_number = static_cast<int> (tag->track());
             song.filepath = temp_string (library.stack_data, file_path.u8string());
             song.artwork_file = temp_string (library.stack_data, art_path.u8string());
+            if (const auto* properties = file.audioProperties())
+                song.track_length_seconds = properties->lengthInSeconds();
 
             if (callback != nullptr)
             {

@@ -23,5 +23,6 @@ struct Transport_Timeline : juce::Component
     std::optional<audio::Audio_Player>* player = nullptr;
     double play_percent = 0.0;
     size_t playing_seconds = 0;
+    size_t song_length_seconds = 0;
 };
 }
