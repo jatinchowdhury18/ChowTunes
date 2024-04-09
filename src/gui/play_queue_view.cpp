@@ -31,9 +31,9 @@ void Play_Queue_List::update_list (const play_queue::Play_Queue& queue)
             cell->selection_fill_colour = juce::Colours::orange.withAlpha (0.5f);
         }
 
-        queue_length_seconds += cell->data->track_length_seconds;
+        queue_length_seconds += static_cast<size_t> (cell->data->track_length_seconds);
         if ((int) idx < queue.currently_playing_song_index)
-            elapsed_length_seconds += cell->data->track_length_seconds;
+            elapsed_length_seconds += static_cast<size_t> (cell->data->track_length_seconds);
     }
 }
 
@@ -177,11 +177,13 @@ void Play_Queue_View::paint (juce::Graphics& g)
     bounds.removeFromBottom (footer_item_height);
     const auto label_bounds = bounds.removeFromBottom (footer_item_height);
     g.setColour (juce::Colours::grey);
-    g.drawFittedText (fmt::format ("{:02d}:{:02d} || {:02d}:{:02d}",
-                                   queue_list.elapsed_length_seconds / 60,
-                                   queue_list.elapsed_length_seconds % 60,
-                                   queue_list.queue_length_seconds / 60,
-                                   queue_list.queue_length_seconds % 60),
+    const auto label = chowdsp::format (queue_list.allocator.allocator,
+                                        "{:02d}:{:02d} || {:02d}:{:02d}",
+                                        queue_list.elapsed_length_seconds / 60,
+                                        queue_list.elapsed_length_seconds % 60,
+                                        queue_list.queue_length_seconds / 60,
+                                        queue_list.queue_length_seconds % 60);
+    g.drawFittedText (chowdsp::toString (label),
                       label_bounds,
                       juce::Justification::left,
                       1);

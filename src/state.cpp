@@ -1,6 +1,6 @@
-#include <chowdsp_logging/chowdsp_logging.h>
 #include "state.h"
 #include "main_component.h"
+#include <chowdsp_logging/chowdsp_logging.h>
 
 namespace chow_tunes::state
 {
@@ -32,11 +32,11 @@ void State::load_state (Main_Component& main)
                                         main.search_view.initialize_search_database (*main.library, main.library_view);
 
                                         const auto duration = std::chrono::high_resolution_clock::now() - start;
-                                        juce::Logger::writeToLog (fmt::format ("Scanned {:d} songs, from {:d} albums, from {:d} artists, in {:d} milliseconds",
-                                                                               (int) main.library->songs.size(),
-                                                                               (int) main.library->albums.size(),
-                                                                               (int) main.library->artists.size(),
-                                                                               (int) std::chrono::duration_cast<std::chrono::milliseconds> (duration).count()));
+                                        chowdsp::log ("Scanned {:d} songs, from {:d} albums, from {:d} artists, in {:d} milliseconds",
+                                                      (int) main.library->songs.size(),
+                                                      (int) main.library->albums.size(),
+                                                      (int) main.library->artists.size(),
+                                                      (int) std::chrono::duration_cast<std::chrono::milliseconds> (duration).count());
                                     }
                                 });
                         });

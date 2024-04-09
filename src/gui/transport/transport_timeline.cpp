@@ -33,7 +33,7 @@ void Transport_Timeline::update()
         needs_repaint |= compare_exchange (playing_seconds, player_opt->get_seconds_played());
 
         const auto player_song_length_seconds = static_cast<double> (player_opt->song_length_samples.load()) / static_cast<double> (player_opt->song_sample_rate.load());
-        needs_repaint |= compare_exchange (song_length_seconds, static_cast<size_t> (player_song_length_seconds));
+        needs_repaint |= compare_exchange (song_length_seconds, static_cast<size_t> (juce::roundToInt (player_song_length_seconds)));
     }
     else
     {
@@ -60,18 +60,14 @@ void Transport_Timeline::paint (juce::Graphics& g)
     g.fillEllipse (juce::Rectangle { 10.0f, 10.0f }.withCentre ({ thumb_x, 7.5f }));
 
     g.setColour (juce::Colours::white);
-    g.drawFittedText (fmt::format ("{:02d}:{:02d}",
-                                   playing_seconds / 60,
-                                   playing_seconds % 60),
-                      local_bounds,
-                      juce::Justification::left,
-                      1);
-
-    g.drawFittedText (fmt::format ("{:02d}:{:02d} || {:02d}:{:02d}",
-                                   playing_seconds / 60,
-                                   playing_seconds % 60,
-                                   song_length_seconds / 60,
-                                   song_length_seconds % 60),
+    chowdsp::ArenaAllocator<std::array<std::byte, 128>> timeline_arena {};
+    const auto timeline_label = chowdsp::format (timeline_arena,
+                                                 "{:02d}:{:02d} || {:02d}:{:02d}",
+                                                 playing_seconds / 60,
+                                                 playing_seconds % 60,
+                                                 song_length_seconds / 60,
+                                                 song_length_seconds % 60);
+    g.drawFittedText (chowdsp::toString (timeline_label),
                       local_bounds,
                       juce::Justification::left,
                       1);

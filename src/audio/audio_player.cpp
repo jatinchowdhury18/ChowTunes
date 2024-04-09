@@ -1,5 +1,6 @@
 #include "audio_player.h"
 
+#include <chowdsp_logging/chowdsp_logging.h>
 #include <chowdsp_buffers/chowdsp_buffers.h>
 #include <chowdsp_math/chowdsp_math.h>
 #include <juce_dsp/juce_dsp.h>
@@ -180,9 +181,10 @@ size_t Audio_Player::get_seconds_played() const noexcept
 
 void Audio_Player::audioDeviceAboutToStart (juce::AudioIODevice* device)
 {
-    juce::Logger::writeToLog ("Audio device starting: " + device->getName()
-                              + ", with sample rate: " + juce::String { device->getCurrentSampleRate() }
-                              + ", and block size: " + juce::String { device->getCurrentBufferSizeSamples() });
+    chowdsp::log ("Audio device starting: {}, with sample rate: {}, and block size: {}",
+        device->getName(),
+        device->getCurrentSampleRate(),
+        device->getCurrentBufferSizeSamples());
 
     device_sample_rate = device->getCurrentSampleRate();
 
@@ -204,6 +206,6 @@ void Audio_Player::audioDeviceStopped()
 
 void Audio_Player::audioDeviceError (const juce::String& errorMessage)
 {
-    juce::Logger::writeToLog ("Audio device error: " + errorMessage);
+    chowdsp::log ("Audio device error: {}", errorMessage);
 }
 } // namespace chow_tunes::audio

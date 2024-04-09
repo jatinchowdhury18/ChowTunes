@@ -175,19 +175,20 @@ void Library_View::paint (juce::Graphics& g)
     auto label_bounds = bounds.removeFromBottom (footer_height);
 
     const auto artist_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
-    g.drawFittedText (fmt::format ("{} Artists", artist_list.cell_entries.size()), artist_label_bounds, juce::Justification::left, 1);
+    const auto artist_view_label = chowdsp::format (artist_list.allocator.allocator, "{} Artists", artist_list.cell_entries.size());
+    g.drawFittedText (chowdsp::toString (artist_view_label), artist_label_bounds, juce::Justification::left, 1);
 
     const auto album_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
-    g.drawFittedText (fmt::format ("{} Albums", album_list.cell_entries.size()), album_label_bounds, juce::Justification::left, 1);
+    const auto album_view_label = chowdsp::format (album_list.allocator.allocator, "{} Albums", album_list.cell_entries.size());
+    g.drawFittedText (chowdsp::toString (album_view_label), album_label_bounds, juce::Justification::left, 1);
 
     const auto song_label_bounds = label_bounds.removeFromLeft (proportionOfWidth (0.33f));
-    g.drawFittedText (fmt::format ("{} Songs || {:02d}:{:02d}",
-                                   song_list.cell_entries.size(),
-                                   song_list_length_seconds / 60,
-                                   song_list_length_seconds % 60),
-                      song_label_bounds,
-                      juce::Justification::left,
-                      1);
+    const auto song_view_label = chowdsp::format (song_list.allocator.allocator,
+                                                  "{} Songs || {:02d}:{:02d}",
+                                                  song_list.cell_entries.size(),
+                                                  song_list_length_seconds / 60,
+                                                  song_list_length_seconds % 60);
+    g.drawFittedText (chowdsp::toString (song_view_label), song_label_bounds, juce::Justification::left, 1);
 }
 
 void Library_View::resized()

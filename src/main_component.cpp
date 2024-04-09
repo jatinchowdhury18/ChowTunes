@@ -1,4 +1,5 @@
 #include "main_component.h"
+#include <chowdsp_logging/chowdsp_logging.h>
 
 namespace chow_tunes
 {
@@ -6,7 +7,7 @@ Main_Component::Main_Component()
 {
     audio_player.emplace();
     audio_format_manager.registerBasicFormats();
-    juce::Logger::writeToLog ("Registered audio formats: " + audio_format_manager.getWildcardForAllFormats());
+    chowdsp::log ("Registered audio formats: {}", audio_format_manager.getWildcardForAllFormats());
 
     hotkey_handler.main_comp = this;
     hotkey_handler.register_hotkeys();
