@@ -59,7 +59,8 @@ Search_View::Search_View()
 
 void Search_View::initialize_search_database (library::Music_Library& library, Library_View& library_view)
 {
-    search_database.resetEntries (library.artists.size() + library.albums.size(), 10'000);
+    const auto num_entries = library.artists.size() + library.albums.size();
+    search_database.resetEntries (num_entries, num_entries * 5);
     search_database.setThreshold (0.5f);
 
     namespace chrono = std::chrono;

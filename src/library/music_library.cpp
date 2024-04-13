@@ -9,9 +9,8 @@ JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarat
 
 namespace chow_tunes::library
 {
-static std::u8string_view to_u8string_view (chowdsp::ArenaAllocatorView alloc, const TagLib::String& str)
+static int64_t u16_string_to_u8 (const TagLib::String& str, char8_t* str_view_start)
 {
-    const auto str_view_start = alloc.data<char8_t> (alloc.get_bytes_used());
     char8_t* str_view_end = nullptr;
     try
     {
@@ -20,10 +19,24 @@ static std::u8string_view to_u8string_view (chowdsp::ArenaAllocatorView alloc, c
     catch ([[maybe_unused]] const utf8::exception& e)
     {
         DBG (e.what());
-        return {};
+        return 0;
+    }
+    return std::distance (str_view_start, str_view_end);
+}
+
+static std::u8string_view to_u8string_view (chowdsp::ChainedArenaAllocator& alloc, const TagLib::String& str)
+{
+    const auto max_char8_needed = str.size() * 2;
+    auto* current_arena = &alloc.get_current_arena();
+    if (current_arena->get_total_num_bytes() - current_arena->get_bytes_used() < max_char8_needed)
+    {
+        const auto str_view_start = alloc.allocate<char8_t> (max_char8_needed);
+        const auto str_view_length = u16_string_to_u8 (str, str_view_start);
+        return { str_view_start, static_cast<size_t> (str_view_length) };
     }
 
-    const auto str_view_length = std::distance (str_view_start, str_view_end);
+    const auto str_view_start = alloc.data<char8_t> (alloc.get_current_arena().get_bytes_used());
+    const auto str_view_length = u16_string_to_u8 (str, str_view_start);
     [[maybe_unused]] const auto start_ptr = alloc.allocate<char8_t> (str_view_length);
     jassert (start_ptr != nullptr);
     return { str_view_start, static_cast<size_t> (str_view_length) };
@@ -36,7 +49,7 @@ static bool equals_ignore_case (const std::u8string_view& lhs, const std::u8stri
 }
 
 template <typename IntType>
-std::string_view temp_string (chowdsp::ArenaAllocatorView alloc, const char* data, IntType count)
+std::string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, const char* data, IntType count)
 {
     auto* t_data = alloc.allocate<char> (count);
     std::copy (data, data + count, t_data);
@@ -44,7 +57,7 @@ std::string_view temp_string (chowdsp::ArenaAllocatorView alloc, const char* dat
 }
 
 template <size_t N>
-std::string_view temp_string (chowdsp::ArenaAllocatorView alloc, const char (&str)[N])
+std::string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, const char (&str)[N])
 {
     // don't copy the null terminator!
     if (str[N - 1] == '\0')
@@ -52,12 +65,12 @@ std::string_view temp_string (chowdsp::ArenaAllocatorView alloc, const char (&st
     return temp_string (alloc, std::data (str), std::size (str));
 }
 
-inline std::string_view temp_string (chowdsp::ArenaAllocatorView alloc, std::string_view str)
+inline std::string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, std::string_view str)
 {
     return temp_string (alloc, std::data (str), std::size (str));
 }
 
-inline std::u8string_view temp_string (chowdsp::ArenaAllocatorView alloc, std::u8string_view str)
+inline std::u8string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, std::u8string_view str)
 {
     auto* t_data = alloc.allocate<char8_t> (str.size());
     std::copy (str.begin(), str.end(), t_data);
@@ -155,10 +168,9 @@ static bool song_is_already_in_library (const Music_Library& library,
 std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& path, const Update_Callback& callback)
 {
     auto library_ptr = std::make_shared<Music_Library>();
-    library_ptr->stack_data.reset (1 << 21);
     library_ptr->artists.reserve (500);
-    library_ptr->albums.reserve (1'000);
-    library_ptr->songs.reserve (10'000);
+    library_ptr->albums.reserve (700);
+    library_ptr->songs.reserve (7'000);
 
     struct Tag_Result
     {
@@ -319,7 +331,7 @@ std::string print_library (const Music_Library& library)
         }
     }
 
-    const auto result = std::string { alloc.data<char> (frame.bytes_used_at_start), count };
+    const auto result = std::string { alloc.data<char> (frame.arena_frame.bytes_used_at_start), count };
     return result;
 }
 } // namespace chow_tunes::library

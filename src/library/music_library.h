@@ -37,7 +37,7 @@ struct Song
 
 struct Music_Library
 {
-    mutable chowdsp::ArenaAllocator<> stack_data;
+    mutable chowdsp::ChainedArenaAllocator stack_data { 1 << 12 };
 
     std::vector<Song> songs {};
     std::vector<Album> albums {};
