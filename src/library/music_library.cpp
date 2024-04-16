@@ -180,14 +180,12 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         std::filesystem::path artwork_path;
     };
 
-    BS::thread_pool thread_pool {};
+    BS::thread_pool thread_pool { std::thread::hardware_concurrency() - 1 };
     auto tag_results = std::make_shared<std::vector<std::future<Tag_Result>>>();
-    tag_results->reserve (10'000);
+    tag_results->reserve (7'000);
 
-    //    std::printf ("Indexing directory: %ls\n", path.c_str());
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
-        //        std::printf ("    Entry: %s\n", dir_entry.path().c_str());
         const auto extension = dir_entry.path().extension();
         if (dir_entry.is_regular_file()
             && (extension == ".mp3" || extension == ".flac"
@@ -283,8 +281,6 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
 
         if (callback != nullptr)
             callback (library, true);
-
-        // std::printf ("Stack bytes_used %zu out of %d\n", library.stack_data.get_bytes_used(), 1 << 21);
     };
 
     if (callback != nullptr)
