@@ -39,7 +39,7 @@ struct Audio_Player : juce::AudioIODeviceCallback
         Stopped,
     };
 
-    std::unique_ptr<juce::AudioBuffer<float>> playing_buffer {};
+    std::unique_ptr<chowdsp::Buffer<int16_t>> playing_buffer {};
     std::atomic<double> song_sample_rate { 48000.0 };
     std::atomic<int> song_length_samples { 0 };
     std::atomic<int> sample_counter { 0 };
@@ -60,6 +60,7 @@ struct Audio_Player : juce::AudioIODeviceCallback
 
     static constexpr auto small_block_size = 64;
     chowdsp::StaticBuffer<float, 2, 4 * small_block_size> leftover_samples { 2, 4 * small_block_size };
+    chowdsp::StaticBuffer<float, 2, small_block_size> small_buffer { 2, small_block_size };
 
     // Effects chain (maybe refactor later)
     static constexpr auto min_gain_db = -60.0f;

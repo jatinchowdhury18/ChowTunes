@@ -1,7 +1,7 @@
 #pragma once
 
 #include <chowdsp_listeners/chowdsp_listeners.h>
-#include <juce_audio_basics/juce_audio_basics.h>
+#include <chowdsp_buffers/chowdsp_buffers.h>
 
 // forward declarations
 namespace chow_tunes
@@ -41,7 +41,7 @@ enum class Audio_Player_Action_Type
 struct Audio_Player_Action
 {
     Audio_Player_Action_Type action_type;
-    std::unique_ptr<juce::AudioBuffer<float>> audio_buffer;
+    std::unique_ptr<chowdsp::Buffer<int16_t>> audio_buffer;
     std::variant<double> action_value; // this value will be different depending on the action!
 };
 

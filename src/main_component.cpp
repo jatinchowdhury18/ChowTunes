@@ -6,6 +6,7 @@ namespace chow_tunes
 Main_Component::Main_Component()
 {
     audio_player.emplace();
+
     audio_format_manager.registerBasicFormats();
     chowdsp::log ("Registered audio formats: {}", audio_format_manager.getWildcardForAllFormats());
 
@@ -23,7 +24,7 @@ Main_Component::Main_Component()
     addAndMakeVisible (play_queue_view);
     addChildComponent (search_view);
 
-    startTimer (5);
+    startTimerHz (40);
     setSize (1250, 750);
 }
 

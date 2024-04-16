@@ -48,27 +48,29 @@ juce_add_gui_app(ChowTunes
     ICON_SMALL res/icon.png
 )
 
-target_sources(ChowTunes
-    PRIVATE
-        src/main.cpp
-        src/main_component.cpp
-        src/state.cpp
+include(SourceFileGroup)
+setup_source_group(ChowTunes LIBRARY_AUDIO_SRCS SOURCES
+    src/main.cpp
+    src/main_component.cpp
+    src/state.cpp
 
-        src/library/music_library.cpp
-        src/play_queue/play_queue.cpp
+    src/library/music_library.cpp
+    src/play_queue/play_queue.cpp
 
-        src/audio/audio_player.cpp
-        src/audio/audio_player_actions.cpp
-        src/audio/audio_file_reader_ffmpeg.h
+    src/audio/audio_player.cpp
+    src/audio/audio_player_actions.cpp
+    src/audio/audio_file_reader_ffmpeg.h
+)
 
-        src/gui/library/library_view.cpp
-        src/gui/library/list_selector.cpp
-        src/gui/search/search_view.cpp
-        src/gui/transport/transport_timeline.cpp
-        src/gui/transport/transport_view.cpp
-        src/gui/command_line.cpp
-        src/gui/hotkey_handler.cpp
-        src/gui/play_queue_view.cpp
+setup_source_group(ChowTunes LIBRARY_AUDIO_SRCS SOURCES
+    src/gui/library/library_view.cpp
+    src/gui/library/list_selector.cpp
+    src/gui/search/search_view.cpp
+    src/gui/transport/transport_timeline.cpp
+    src/gui/transport/transport_view.cpp
+    src/gui/command_line.cpp
+    src/gui/hotkey_handler.cpp
+    src/gui/play_queue_view.cpp
 )
 
 include(CMakeRC)
@@ -112,6 +114,7 @@ target_compile_definitions(ChowTunes
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         CHOWDSP_USE_LIBSAMPLERATE=1
+        CHOWDSP_BUFFER_MAX_NUM_CHANNELS=2
         TAGLIB_STATIC=1
 )
 

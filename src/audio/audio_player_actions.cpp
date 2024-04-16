@@ -11,17 +11,12 @@ namespace chow_tunes::audio
 Audio_Player_Action create_play_song_action (const library::Song& song)
 {
     const auto filepath_str = juce::String::fromUTF8 ((const char*) song.filepath.data(), (int) song.filepath.size());
-
-    // old way... we can bring this back if there are files that FFMPEG doesn't support
-    // chowdsp::SharedAudioFileSaveLoadHelper audio_file_helper;
-    // auto [buffer, fs] = audio_file_helper->loadFile (juce::File { filepath_str });
-
     try
     {
         auto [buffer, fs] = ffmpeg_reader::read_file (filepath_str.toStdString());
         Audio_Player_Action action;
         action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
-        action.audio_buffer = std::make_unique<juce::AudioBuffer<float>> (std::move (buffer));
+        action.audio_buffer = std::make_unique<chowdsp::Buffer<int16_t>> (std::move (buffer));
         action.action_value = static_cast<double> (fs);
         return action;
     }

@@ -120,7 +120,7 @@ static auto read_file (const std::string& file_name)
     // but we need this for doinga format conversion.
     swr_alloc_set_opts2 (&resample_context,
                          &codec_context->ch_layout,
-                         AV_SAMPLE_FMT_FLTP,
+                         AV_SAMPLE_FMT_S16P,
                          sample_rate,
                          &codec_context->ch_layout,
                          codec_context->sample_fmt,
@@ -152,7 +152,7 @@ static auto read_file (const std::string& file_name)
 
     // Allocate the output buffer
     const auto length_samples = ((double) format_context->duration / (double) AV_TIME_BASE) * (double) sample_rate;
-    juce::AudioBuffer<float> audio { codec_context->ch_layout.nb_channels,
+    chowdsp::Buffer<int16_t> audio { codec_context->ch_layout.nb_channels,
                                      static_cast<int> (length_samples) };
     audio.clear();
 
@@ -193,11 +193,11 @@ static auto read_file (const std::string& file_name)
         while ((error = avcodec_receive_frame (codec_context, frame)) == 0)
         {
             // Send the frame to the resampler
-            const auto out_frame = chowdsp::BufferView {
+            const auto out_frame = chowdsp::BufferView<int16_t> {
                 audio,
                 static_cast<int> (sample_counter),
                 static_cast<int> (std::min ((int64_t) frame->nb_samples,
-                                            (int64_t) audio.getNumSamples() - sample_counter))
+                                            (int64_t) audio.getNumSamples() - sample_counter)),
             };
             if ((error = swr_convert (resample_context,
                                       const_cast<uint8_t**> (reinterpret_cast<uint8_t* const*> (out_frame.getArrayOfWritePointers())),
@@ -224,6 +224,6 @@ static auto read_file (const std::string& file_name)
         }
     }
 
-    return std::make_tuple (audio, codec_context->sample_rate);
+    return std::make_tuple (std::move (audio), codec_context->sample_rate);
 }
 } // namespace ffmpeg_reader
