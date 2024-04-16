@@ -16,7 +16,7 @@ Audio_Player_Action create_play_song_action (const library::Song& song)
         auto [buffer, fs] = ffmpeg_reader::read_file (filepath_str.toStdString());
         Audio_Player_Action action;
         action.action_type = audio::Audio_Player_Action_Type::Start_New_Song;
-        action.audio_buffer = std::make_unique<chowdsp::Buffer<int16_t>> (std::move (buffer));
+        action.audio_buffer = buffer;
         action.action_value = static_cast<double> (fs);
         return action;
     }
@@ -27,6 +27,12 @@ Audio_Player_Action create_play_song_action (const library::Song& song)
             .action_type = Audio_Player_Action_Type::Invalid
         };
     }
+}
+
+static void free_buffer (const Read_Buffer& buffer)
+{
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        chowdsp::aligned_free (buffer.getWritePointer (ch));
 }
 
 void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
@@ -43,11 +49,13 @@ void Audio_Player_Action_Router::route_action (Audio_Player_Action&& action)
     }
     else if (action.action_type == Action_Type::Dead_Song)
     {
-        action.audio_buffer.reset();
+        free_buffer (action.audio_buffer);
+        action.audio_buffer = {};
     }
     else if (action.action_type == Action_Type::Song_Finished)
     {
-        action.audio_buffer.reset();
+        free_buffer (action.audio_buffer);
+        action.audio_buffer = {};
         play_queue.play_next_song();
     }
     else if (action.action_type == Action_Type::Play_Song)

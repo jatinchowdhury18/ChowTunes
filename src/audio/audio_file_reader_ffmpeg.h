@@ -152,8 +152,10 @@ static auto read_file (const std::string& file_name)
 
     // Allocate the output buffer
     const auto length_samples = ((double) format_context->duration / (double) AV_TIME_BASE) * (double) sample_rate;
-    chowdsp::Buffer<int16_t> audio { codec_context->ch_layout.nb_channels,
-                                     static_cast<int> (length_samples) };
+
+    int16_t* data_ptrs[2] = { (int16_t*) chowdsp::aligned_alloc (16, static_cast<size_t> (length_samples) * sizeof (int16_t)),
+                              (int16_t*) chowdsp::aligned_alloc (16, static_cast<size_t> (length_samples) * sizeof (int16_t)) };
+    chowdsp::BufferView<int16_t> audio { data_ptrs, 2, static_cast<int> (length_samples) };
     audio.clear();
 
     // Read the file until either nothing is left
@@ -224,6 +226,6 @@ static auto read_file (const std::string& file_name)
         }
     }
 
-    return std::make_tuple (std::move (audio), codec_context->sample_rate);
+    return std::make_tuple (audio, codec_context->sample_rate);
 }
 } // namespace ffmpeg_reader

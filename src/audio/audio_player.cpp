@@ -31,7 +31,7 @@ void Audio_Player::audioDeviceIOCallbackWithContext ([[maybe_unused]] const floa
     handle_incoming_messages();
 
     auto out_buffer = chowdsp::BufferView<float> { outputChannelData, numOutputChannels, numSamples };
-    if (playing_buffer == nullptr || state.load() != State::Playing)
+    if (playing_buffer.getNumChannels() == 0 || state.load() != State::Playing)
     {
         out_buffer.clear();
         return;
@@ -42,11 +42,11 @@ void Audio_Player::audioDeviceIOCallbackWithContext ([[maybe_unused]] const floa
     {
         Audio_Player_Action action;
         action.action_type = Audio_Player_Action_Type::Song_Finished;
-        action.audio_buffer.swap (playing_buffer);
+        std::swap (playing_buffer, action.audio_buffer);
         audio_to_ui_queue.enqueue (std::move (action));
     }
 
-    if (playing_buffer == nullptr)
+    if (playing_buffer.getNumChannels() == 0)
         state.store (State::Stopped);
 }
 
@@ -59,14 +59,14 @@ void Audio_Player::handle_incoming_messages()
         {
             song_sample_rate.store (std::get<double> (action.action_value));
             jassert (song_sample_rate.load() > 0.0);
-            playing_buffer.swap (action.audio_buffer);
+            std::swap (playing_buffer, action.audio_buffer);
             leftover_samples.setCurrentSize (2, 0);
 
             action.action_type = Audio_Player_Action_Type::Dead_Song;
             audio_to_ui_queue.try_enqueue (std::move (action));
 
             sample_counter.store (0);
-            song_length_samples.store (playing_buffer->getNumSamples());
+            song_length_samples.store (playing_buffer.getNumSamples());
             state.store (State::Playing);
 
             for (auto& resampler : resamplers)
@@ -79,7 +79,7 @@ void Audio_Player::handle_incoming_messages()
         }
         else if (action.action_type == Audio_Player_Action_Type::Stop_Song)
         {
-            playing_buffer.swap (action.audio_buffer);
+            std::swap (playing_buffer, action.audio_buffer);
             action.action_type = Audio_Player_Action_Type::Dead_Song;
             audio_to_ui_queue.try_enqueue (std::move (action));
 
@@ -121,17 +121,17 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
     if (write_index < write_buffer.getNumSamples() && leftover_samples.getNumSamples() > 0)
         write_from_leftovers();
 
-    while (sample_counter.load() < playing_buffer->getNumSamples() && write_index < write_buffer.getNumSamples())
+    while (sample_counter.load() < playing_buffer.getNumSamples() && write_index < write_buffer.getNumSamples())
     {
         const auto current_sample_count = sample_counter.load();
 
         leftover_samples.setCurrentSize (2, small_block_size * (int) std::ceil (resample_ratio) + 1);
-        const auto num_samples_to_read = juce::jmin (small_block_size, playing_buffer->getNumSamples() - current_sample_count);
+        const auto num_samples_to_read = juce::jmin (small_block_size, playing_buffer.getNumSamples() - current_sample_count);
 
         small_buffer.setCurrentSize (2, num_samples_to_read);
         for (int ch = 0; ch < 2; ++ch)
         {
-            const auto src_channel_data = playing_buffer->getReadPointer (ch);
+            const auto src_channel_data = playing_buffer.getReadPointer (ch);
             const auto dest_channel_data = small_buffer.getWritePointer (ch);
             std::copy (src_channel_data + current_sample_count, src_channel_data + current_sample_count + num_samples_to_read, dest_channel_data);
         }
@@ -145,7 +145,7 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
                 .data_out = leftover_samples.getWritePointer (ch),
                 .input_frames = num_samples_to_read,
                 .output_frames = leftover_samples.getNumSamples(),
-                .end_of_input = current_sample_count + num_samples_to_read == playing_buffer->getNumSamples() ? 1 : 0,
+                .end_of_input = current_sample_count + num_samples_to_read == playing_buffer.getNumSamples() ? 1 : 0,
                 .src_ratio = resample_ratio
             };
 
@@ -166,7 +166,7 @@ bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer)
 
     process_effects (write_buffer);
 
-    return sample_counter.load() == playing_buffer->getNumSamples() && leftover_samples.getNumSamples() == 0;
+    return sample_counter.load() == playing_buffer.getNumSamples() && leftover_samples.getNumSamples() == 0;
 }
 
 void Audio_Player::process_effects (const chowdsp::BufferView<float>& buffer) noexcept

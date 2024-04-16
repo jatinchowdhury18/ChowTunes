@@ -39,7 +39,7 @@ struct Audio_Player : juce::AudioIODeviceCallback
         Stopped,
     };
 
-    std::unique_ptr<chowdsp::Buffer<int16_t>> playing_buffer {};
+    Read_Buffer playing_buffer {};
     std::atomic<double> song_sample_rate { 48000.0 };
     std::atomic<int> song_length_samples { 0 };
     std::atomic<int> sample_counter { 0 };

@@ -38,10 +38,12 @@ enum class Audio_Player_Action_Type
     Move_Playhead,
 };
 
+using Read_Buffer = chowdsp::BufferView<int16_t>;
+
 struct Audio_Player_Action
 {
     Audio_Player_Action_Type action_type;
-    std::unique_ptr<chowdsp::Buffer<int16_t>> audio_buffer;
+    Read_Buffer audio_buffer {};
     std::variant<double> action_value; // this value will be different depending on the action!
 };
 
