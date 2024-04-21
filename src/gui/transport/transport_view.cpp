@@ -4,9 +4,20 @@
 #include "gui/gui_resources.h"
 #include "play_queue/play_queue.h"
 #include "state.h"
+#include <chowdsp_logging/chowdsp_logging.h>
 
 namespace chow_tunes::gui
 {
+static juce::Image rescale_artwork (const juce::Image& original)
+{
+    static constexpr int artwork_resolution = 512;
+    juce::Image scaled_image { juce::Image::PixelFormat::ARGB, artwork_resolution, artwork_resolution, false };
+    juce::Graphics g (scaled_image);
+    g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+    g.drawImage (original, juce::Rectangle { artwork_resolution, artwork_resolution }.toFloat());
+    return scaled_image;
+}
+
 Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Action_Router& action_router)
 {
     addAndMakeVisible (prev_button);
@@ -54,6 +65,7 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
     {
         const auto fs = cmrc::gui::get_filesystem();
         const auto icon_file = fs.open ("icon.png");
+        artwork_path = {};
         song_artwork = juce::ImageCache::getFromMemory (icon_file.begin(), (int) icon_file.size());
     };
 
@@ -85,17 +97,27 @@ Transport_View::Transport_View (state::State& app_state, audio::Audio_Player_Act
         const auto& album = library->albums[song->album_id];
         album_name = juce::String::fromUTF8 ((const char*) album.name.data(), (int) album.name.size());
 
-        if (song->artwork_file.empty())
+        if (song->artwork_file != artwork_path)
         {
-            load_fallback_artwork();
-        }
-        else
-        {
-            const auto artwork_path_str = juce::String::fromUTF8 ((const char*) song->artwork_file.data(), (int) song->artwork_file.size());
-            song_artwork = juce::ImageCache::getFromFile (juce::File { artwork_path_str });
-
-            if (song_artwork.isNull())
+            artwork_path = song->artwork_file;
+            if (artwork_path.empty())
+            {
                 load_fallback_artwork();
+            }
+            else
+            {
+                const auto artwork_path_str = juce::String::fromUTF8 ((const char*) artwork_path.data(), (int) artwork_path.size());
+                const auto artwork_file = juce::File { artwork_path_str };
+                chowdsp::log ("Loading artwork from path {}, with size {} bytes", artwork_path_str, artwork_file.getSize());
+
+                auto full_scale_artwork = juce::ImageFileFormat::loadFrom (artwork_file);
+                song_artwork = rescale_artwork (full_scale_artwork);
+                chowdsp::log ("Artwork ref count: {}, artwork pixel data ref-count {}",
+                    full_scale_artwork.getReferenceCount(), full_scale_artwork.getPixelData()->getSharedCount());
+
+                if (song_artwork.isNull())
+                    load_fallback_artwork();
+            }
         }
     };
 

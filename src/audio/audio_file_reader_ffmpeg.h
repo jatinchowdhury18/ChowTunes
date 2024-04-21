@@ -152,9 +152,11 @@ static auto read_file (const std::string& file_name)
 
     // Allocate the output buffer
     const auto length_samples = ((double) format_context->duration / (double) AV_TIME_BASE) * (double) sample_rate;
-
-    int16_t* data_ptrs[2] = { (int16_t*) chowdsp::aligned_alloc (16, static_cast<size_t> (length_samples) * sizeof (int16_t)),
-                              (int16_t*) chowdsp::aligned_alloc (16, static_cast<size_t> (length_samples) * sizeof (int16_t)) };
+    const auto length_samples_int = static_cast<size_t> (std::ceil (length_samples));
+    int16_t* data_ptrs[2] = {
+        (int16_t*) chowdsp::aligned_alloc (16, length_samples_int * sizeof (int16_t)),
+        (int16_t*) chowdsp::aligned_alloc (16, length_samples_int * sizeof (int16_t)),
+    };
     chowdsp::BufferView<int16_t> audio { data_ptrs, 2, static_cast<int> (length_samples) };
     audio.clear();
 
@@ -165,6 +167,9 @@ static auto read_file (const std::string& file_name)
     {
         // Read from the frame
         error = av_read_frame (format_context, packet);
+        auto defer = chowdsp::runAtEndOfScope ([packet]
+                                               { av_packet_unref (packet); });
+
         if (error == AVERROR_EOF)
         {
             break;

@@ -91,9 +91,6 @@ void Audio_Player::handle_incoming_messages()
                 src_reset (resampler.get());
         }
     }
-
-    // If this is false, then we will have a de-allocation here, which would be bad!!
-    jassert (action.audio_buffer == nullptr); // NOLINT
 }
 
 bool Audio_Player::read_samples (const chowdsp::BufferView<float>& write_buffer) noexcept

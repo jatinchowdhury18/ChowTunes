@@ -45,6 +45,8 @@ struct Transport_View : juce::Component
     juce::String artist_name;
     juce::String album_name;
     juce::String song_name;
+
+    std::u8string_view artwork_path {};
     juce::Image song_artwork;
 };
 } // namespace chow_tunes::gui
