@@ -65,9 +65,9 @@ jobs:
 
     - name: vcpkg check
       run: |
-        ls ${{ env._VCPKG_ }}/packages/ffmpeg_x64-windows-static-md-release/include
-        ls ${{ env._VCPKG_ }}/packages/ffmpeg_x64-windows-static-md-release/include/libavformat
-        ls ${{ env._VCPKG_ }}/packages/ffmpeg_x64-windows-static-md-release/lib
+        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include
+        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include/libavformat
+        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/lib
 
     - name: Checkout code
       uses: actions/checkout@v2
