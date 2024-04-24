@@ -1,0 +1,76 @@
+name: Nightly Builds
+
+on:
+  push:
+    branches:
+    - main
+    - ci
+
+  workflow_dispatch:
+
+jobs:
+  windows_build:
+    name: Build on Windows
+    runs-on: windows-2022
+
+    steps:
+    - name: Install Ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup MSVC devcmd
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Configure
+      shell: bash
+      run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
+
+    - name: Build
+      shell: bash
+      run: cmake --build build --config Release --parallel 4 --target ChowTunes
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: chow-tunes-windows
+        path: build/ChowTunes_artefacts/Release/ChowTunes.exe
+
+  macos_build:
+    name: Build on MacOS
+    runs-on: macos-14
+
+    steps:
+    - name: Set Xcode version
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.2'
+
+    - name: Get latest CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Configure
+      shell: bash
+      run: cmake -Bbuild -G"Ninja Multi-Config"
+
+    - name: Build
+      shell: bash
+      run: cmake --build build --config Release --parallel 3 --target ChowTunes
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: chow-tunes-macos
+        path: build/ChowTunes_artefacts/Release/ChowTunes.app
