@@ -61,7 +61,7 @@ jobs:
 
     - name: vcpkg install
       working-directory: ${{ env._VCPKG_ }}
-      run: ./vcpkg.exe install ffmpeg:x64-windows-static-md-release
+      run: vcpkg.exe install ffmpeg:x64-windows-static-md-release
 
     - name: Checkout code
       uses: actions/checkout@v2
