@@ -9,82 +9,82 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows_build:
-    name: Build on Windows
-    runs-on: windows-2022
-    env:
-      _VCPKG_: ${{ github.workspace }}/vcpkg
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
-      VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
+  # windows_build:
+  #   name: Build on Windows
+  #   runs-on: windows-2022
+  #   env:
+  #     _VCPKG_: ${{ github.workspace }}/vcpkg
+  #     VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+  #     VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
 
-    steps:
-    - name: Install Ninja
-      uses: seanmiddleditch/gha-setup-ninja@master
+  #   steps:
+  #   - name: Install Ninja
+  #     uses: seanmiddleditch/gha-setup-ninja@master
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v2
+  #   - name: Add msbuild to PATH
+  #     uses: microsoft/setup-msbuild@v2
 
-    - name: Setup MSVC devcmd
-      uses: ilammy/msvc-dev-cmd@v1
+  #   - name: Setup MSVC devcmd
+  #     uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Get latest CMake
-      uses: lukka/get-cmake@latest
+  #   - name: Get latest CMake
+  #     uses: lukka/get-cmake@latest
 
-    - uses: actions/github-script@v7
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+  #   - uses: actions/github-script@v7
+  #     with:
+  #       script: |
+  #         core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+  #         core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-    - name: Checkout vcpkg
-      uses: actions/checkout@v4
-      with:
-        ref: 2024.03.25
-        repository: microsoft/vcpkg
-        path: ${{ env._VCPKG_ }}
+  #   - name: Checkout vcpkg
+  #     uses: actions/checkout@v4
+  #     with:
+  #       ref: 2024.03.25
+  #       repository: microsoft/vcpkg
+  #       path: ${{ env._VCPKG_ }}
 
-    - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
-      run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
-      shell: bash
+  #   - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
+  #     run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
+  #     shell: bash
 
-    - name: Restore vcpkg
-      uses: actions/cache@v4
-      with:
-        path: |
-          ${{ env._VCPKG_ }}
-          !${{ env._VCPKG_ }}/buildtrees
-          !${{ env._VCPKG_ }}/packages
-          !${{ env._VCPKG_ }}/downloads
-        # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
-        key: ${{ hashFiles( 'vcpkg/.git/HEAD' )}}
+  #   - name: Restore vcpkg
+  #     uses: actions/cache@v4
+  #     with:
+  #       path: |
+  #         ${{ env._VCPKG_ }}
+  #         !${{ env._VCPKG_ }}/buildtrees
+  #         !${{ env._VCPKG_ }}/packages
+  #         !${{ env._VCPKG_ }}/downloads
+  #       # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
+  #       key: ${{ hashFiles( 'vcpkg/.git/HEAD' )}}
 
-    - name: vcpkg install
-      working-directory: ${{ env._VCPKG_ }}
-      run: vcpkg.exe install ffmpeg:x64-windows-static-md-release
+  #   - name: vcpkg install
+  #     working-directory: ${{ env._VCPKG_ }}
+  #     run: vcpkg.exe install ffmpeg:x64-windows-static-md-release
 
-    - name: vcpkg check
-      run: |
-        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include
-        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include/libavformat
-        ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/lib
+  #   - name: vcpkg check
+  #     run: |
+  #       ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include
+  #       ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/include/libavformat
+  #       ls ${{ env._VCPKG_ }}/installed/ffmpeg_x64-windows-static-md-release/lib
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #       submodules: recursive
 
-    - name: Configure
-      shell: bash
-      run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DVCPKG_DIR=D:/a/ChowTunes/ChowTunes/vcpkg
+  #   - name: Configure
+  #     shell: bash
+  #     run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DVCPKG_DIR=D:/a/ChowTunes/ChowTunes/vcpkg
 
-    - name: Build
-      shell: bash
-      run: cmake --build build --config Release --parallel 4 --target ChowTunes
+  #   - name: Build
+  #     shell: bash
+  #     run: cmake --build build --config Release --parallel 4 --target ChowTunes
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: chow-tunes-windows
-        path: build/ChowTunes_artefacts/Release/ChowTunes.exe
+  #   - uses: actions/upload-artifact@v4
+  #     with:
+  #       name: chow-tunes-windows
+  #       path: build/ChowTunes_artefacts/Release/ChowTunes.exe
 
   # macos_build:
   #   name: Build on MacOS
