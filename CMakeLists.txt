@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 project(ChowTunes VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
+message(STATUS "Using VCPKG_DIR: ${VCPKG_DIR}")
 
 include(CPM)
 CPMAddPackage(
@@ -76,7 +77,7 @@ setup_source_group(ChowTunes LIBRARY_AUDIO_SRCS SOURCES
 include(CMakeRC)
 add_subdirectory(res)
 
-find_package(FFMPEG REQUIRED)
+include(FindFFMPEG)
 message(STATUS "Found FFMPEG libs: ${FFMPEG_LIBRARIES}")
 message(STATUS "Found FFMPEG include dirs: ${FFMPEG_INCLUDE_DIR}")
 
@@ -105,6 +106,8 @@ target_link_libraries(ChowTunes
 )
 if(APPLE)
     target_link_libraries(ChowTunes PRIVATE "-framework Carbon")
+elseif(WIN32)
+    target_link_libraries(ChowTunes PRIVATE strmiids mfuuid bcrypt secur32)
 endif()
 
 target_compile_definitions(ChowTunes
