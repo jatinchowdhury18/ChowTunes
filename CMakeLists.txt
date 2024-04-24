@@ -105,7 +105,17 @@ target_link_libraries(ChowTunes
 )
 if(APPLE)
     target_link_libraries(ChowTunes PRIVATE "-framework Carbon")
+elseif(WIN32)
+    target_link_libraries(ChowTunes
+        PRIVATE
+            strmiids
+            mfuuid
+            bcrypt
+            secur32
+        # -lws2_32 -lole32 -luser32
+    )
 endif()
+
 
 target_compile_definitions(ChowTunes
     PUBLIC

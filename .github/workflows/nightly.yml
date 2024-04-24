@@ -12,6 +12,10 @@ jobs:
   windows_build:
     name: Build on Windows
     runs-on: windows-2022
+    env:
+      _VCPKG_: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+      VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
 
     steps:
     - name: Install Ninja
@@ -26,6 +30,39 @@ jobs:
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
 
+    - uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - name: Checkout vcpkg
+      uses: actions/checkout@v4
+      with:
+        ref: 2024.03.25
+        repository: microsoft/vcpkg
+        path: ${{ env._VCPKG_ }}
+
+    - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
+      run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
+      shell: bash
+
+    - name: Restore vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ env._VCPKG_ }}
+          !${{ env._VCPKG_ }}/buildtrees
+          !${{ env._VCPKG_ }}/packages
+          !${{ env._VCPKG_ }}/downloads
+          !${{ env._VCPKG_ }}/installed
+        # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
+        key: ${{ hashFiles( 'vcpkg/.git/HEAD' )}}
+
+    - name: vcpkg install
+      working-directory: ${{ env._VCPKG_ }}
+      run: ./vcpkg.exe install ffmpeg:x64-windows-static-md-release
+
     - name: Checkout code
       uses: actions/checkout@v2
       with:
@@ -33,7 +70,7 @@ jobs:
 
     - name: Configure
       shell: bash
-      run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
+      run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DVCPKG_DIR=${{ env._VCPKG_ }}
 
     - name: Build
       shell: bash
@@ -44,33 +81,33 @@ jobs:
         name: chow-tunes-windows
         path: build/ChowTunes_artefacts/Release/ChowTunes.exe
 
-  macos_build:
-    name: Build on MacOS
-    runs-on: macos-14
+  # macos_build:
+  #   name: Build on MacOS
+  #   runs-on: macos-14
 
-    steps:
-    - name: Set Xcode version
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: '15.2'
+  #   steps:
+  #   - name: Set Xcode version
+  #     uses: maxim-lobanov/setup-xcode@v1
+  #     with:
+  #       xcode-version: '15.2'
 
-    - name: Get latest CMake
-      uses: lukka/get-cmake@latest
+  #   - name: Get latest CMake
+  #     uses: lukka/get-cmake@latest
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
+  #   - name: Checkout code
+  #     uses: actions/checkout@v2
+  #     with:
+  #       submodules: recursive
 
-    - name: Configure
-      shell: bash
-      run: cmake -Bbuild -G"Ninja Multi-Config"
+  #   - name: Configure
+  #     shell: bash
+  #     run: cmake -Bbuild -G"Ninja Multi-Config"
 
-    - name: Build
-      shell: bash
-      run: cmake --build build --config Release --parallel 3 --target ChowTunes
+  #   - name: Build
+  #     shell: bash
+  #     run: cmake --build build --config Release --parallel 3 --target ChowTunes
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: chow-tunes-macos
-        path: build/ChowTunes_artefacts/Release/ChowTunes.app
+  #   - uses: actions/upload-artifact@v4
+  #     with:
+  #       name: chow-tunes-macos
+  #       path: build/ChowTunes_artefacts/Release/ChowTunes.app
