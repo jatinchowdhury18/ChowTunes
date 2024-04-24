@@ -33,6 +33,11 @@ FIND_PATH(FFMPEG_INCLUDE_DIR avformat.h
 # if ffmpeg headers are seperated to each of libavformat, libavcodec etc..
 IF( NOT FFMPEG_INCLUDE_DIR )
     message(STATUS "Looking for FFMPEG includes at: ${VCPKG_DIR}/packages/ffmpeg_x64-windows-static-md-release/include")
+    if(EXISTS "${VCPKG_DIR}/packages/ffmpeg_x64-windows-static-md-release/include/libavformat/avformat.h")
+        message(STATUS "libavformat header exists!")
+    else()
+        message(STATUS "libavformat header does not exist!")
+    endif()
     FIND_PATH(FFMPEG_INCLUDE_DIR libavformat/avformat.h
         PATHS
         $ENV{FFMPEG_DIR}/include
