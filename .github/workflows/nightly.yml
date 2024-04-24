@@ -55,7 +55,6 @@ jobs:
           !${{ env._VCPKG_ }}/buildtrees
           !${{ env._VCPKG_ }}/packages
           !${{ env._VCPKG_ }}/downloads
-          !${{ env._VCPKG_ }}/installed
         # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
         key: ${{ hashFiles( 'vcpkg/.git/HEAD' )}}
 
