@@ -77,7 +77,7 @@ setup_source_group(ChowTunes LIBRARY_AUDIO_SRCS SOURCES
 include(CMakeRC)
 add_subdirectory(res)
 
-find_package(FFMPEG REQUIRED)
+include(FindFFMPEG)
 message(STATUS "Found FFMPEG libs: ${FFMPEG_LIBRARIES}")
 message(STATUS "Found FFMPEG include dirs: ${FFMPEG_INCLUDE_DIR}")
 

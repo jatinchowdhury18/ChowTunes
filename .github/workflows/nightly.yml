@@ -73,9 +73,6 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-
     - name: Configure
       shell: bash
       run: cmake -Bbuild -G"Ninja Multi-Config" -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DVCPKG_DIR=D:/a/ChowTunes/ChowTunes/vcpkg
