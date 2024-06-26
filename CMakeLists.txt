@@ -40,7 +40,7 @@ target_compile_options(tag
 CPMAddPackage(
     NAME samplerate
     GITHUB_REPOSITORY libsndfile/libsamplerate
-    GIT_TAG 0.2.2
+    GIT_TAG 4858fb016550d677de2356486bcceda5aed85a72
     OPTIONS "LIBSAMPLERATE_EXAMPLES OFF" "LIBSAMPLERATE_INSTALL OFF" "BUILD_TESTING OFF"
 )
 
@@ -139,15 +139,18 @@ target_include_directories(ChowTunes
 )
 
 # @TODO: figure out better "install" paths
+get_target_property(output_dir ChowTunes RUNTIME_OUTPUT_DIRECTORY)
 if(WIN32)
-    set(install_dir "C:/Users/$ENV{USERNAME}")
+    set(install_dir "C:/Users/$ENV{USERNAME}/")
+    set(output_exe "${output_dir}/ChowTunes.exe")
 else()
-    set(install_dir "$ENV{HOME}")
+    set(install_dir "$ENV{HOME}/")
+    set(output_exe "${output_dir}/ChowTunes.app")
 endif()
 
 add_custom_target(ChowTunes_Install
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         DEPENDS ChowTunes
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying $<TARGET_FILE:ChowTunes> to ${install_dir}"
-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:ChowTunes>" ${install_dir}
+        COMMAND echo "Copying ${output_exe} to ${install_dir}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${output_dir}/${format} ${install_dir}
 )

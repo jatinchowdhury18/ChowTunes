@@ -54,8 +54,8 @@ struct Audio_Player : juce::AudioIODeviceCallback
     using SRCResamplerPtr = std::unique_ptr<SRC_STATE, decltype (&src_delete)>;
     int src_error {};
     std::array<SRCResamplerPtr, 2> resamplers {
-        SRCResamplerPtr { src_new (SRC_SINC_BEST_QUALITY, 1, &src_error), &src_delete },
-        SRCResamplerPtr{ src_new (SRC_SINC_BEST_QUALITY, 1, &src_error), &src_delete }
+        SRCResamplerPtr { src_new (SRC_SINC_FASTEST, 1, &src_error), &src_delete },
+        SRCResamplerPtr{ src_new (SRC_SINC_FASTEST, 1, &src_error), &src_delete }
     };
 
     static constexpr auto small_block_size = 64;

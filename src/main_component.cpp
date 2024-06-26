@@ -24,7 +24,7 @@ Main_Component::Main_Component()
     addAndMakeVisible (play_queue_view);
     addChildComponent (search_view);
 
-    startTimerHz (40);
+    startTimerHz (25);
     setSize (1250, 750);
 }
 
