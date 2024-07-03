@@ -33,7 +33,9 @@ static auto read_file (const std::string& file_name)
     auto _ = chowdsp::runAtEndOfScope (
         [&]
         {
+            JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wdeprecated-declarations")
             avcodec_close (codec_context);
+            JUCE_END_IGNORE_WARNINGS_GCC_LIKE
             avcodec_free_context (&codec_context);
             avio_closep (&format_context->pb);
             avformat_free_context (format_context);

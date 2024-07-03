@@ -1,5 +1,7 @@
-#include "play_queue_view.h"
 #include <chowdsp_logging/chowdsp_logging.h>
+
+#include "library/taglib.h"
+#include "play_queue_view.h"
 
 namespace chow_tunes::gui
 {
@@ -31,9 +33,10 @@ void Play_Queue_List::update_list (const play_queue::Play_Queue& queue)
             cell->selection_fill_colour = juce::Colours::orange.withAlpha (0.5f);
         }
 
-        queue_length_seconds += static_cast<size_t> (cell->data->track_length_seconds);
+        const auto song_length_seconds = get_file_length (cell->data->filepath);
+        queue_length_seconds += static_cast<size_t> (song_length_seconds);
         if ((int) idx < queue.currently_playing_song_index)
-            elapsed_length_seconds += static_cast<size_t> (cell->data->track_length_seconds);
+            elapsed_length_seconds += static_cast<size_t> (song_length_seconds);
     }
 }
 

@@ -2,11 +2,7 @@
 
 #include "music_library.h"
 
-JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations", "-Wdeprecated-dynamic-exception-spec")
-#include <fileref.h>
-#include <tpropertymap.h>
-#include <utf8-cpp/checked.h>
-
+#include "taglib.h"
 #include "bs_thread_pool.h"
 
 namespace chow_tunes::library
@@ -29,15 +25,15 @@ static int64_t u16_string_to_u8 (const TagLib::String& str, char8_t* str_view_st
 static std::u8string_view to_u8string_view (chowdsp::ChainedArenaAllocator& alloc, const TagLib::String& str)
 {
     const auto max_char8_needed = str.size() * 2;
-    auto* current_arena = &alloc.get_current_arena();
-    if (current_arena->get_total_num_bytes() - current_arena->get_bytes_used() < max_char8_needed)
+    auto& current_arena = alloc.get_current_arena();
+    if (current_arena.get_total_num_bytes() - current_arena.get_bytes_used() < max_char8_needed)
     {
         const auto str_view_start = alloc.allocate<char8_t> (max_char8_needed);
         const auto str_view_length = u16_string_to_u8 (str, str_view_start);
         return { str_view_start, static_cast<size_t> (str_view_length) };
     }
 
-    const auto str_view_start = alloc.data<char8_t> (alloc.get_current_arena().get_bytes_used());
+    const auto str_view_start = alloc.data<char8_t> (current_arena.get_bytes_used());
     const auto str_view_length = u16_string_to_u8 (str, str_view_start);
     [[maybe_unused]] const auto start_ptr = alloc.allocate<char8_t> (str_view_length);
     jassert (start_ptr != nullptr);
@@ -74,7 +70,7 @@ inline std::string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, std:
 
 inline std::u8string_view temp_string (chowdsp::ChainedArenaAllocator& alloc, std::u8string_view str)
 {
-    auto* t_data = alloc.allocate<char8_t> (str.size());
+    auto* t_data = alloc.allocate<char8_t> (str.size() + 1);
     std::copy (str.begin(), str.end(), t_data);
     return { t_data, str.size() };
 }
@@ -182,7 +178,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         std::filesystem::path artwork_path;
     };
 
-    BS::thread_pool thread_pool { std::min (std::thread::hardware_concurrency(), 8U) };
+    BS::thread_pool thread_pool { std::min (std::thread::hardware_concurrency() - 2, 8U) };
     auto tag_results = std::make_shared<std::vector<std::future<Tag_Result>>>();
     tag_results->reserve (7'000);
 
@@ -197,7 +193,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
             tag_results->push_back (thread_pool.submit (
                 [file_path = dir_entry.path()]() -> Tag_Result
                 {
-                    TagLib::FileRef file { file_path.c_str() };
+                    TagLib::FileRef file { file_path.c_str(), false };
 
                     const auto potential_artwork_file = [search_path = file_path.parent_path()]() -> std::filesystem::path
                     {
@@ -270,8 +266,6 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
             song.track_number = static_cast<int> (tag->track());
             song.filepath = temp_string (library.stack_data, file_path.u8string());
             song.artwork_file = temp_string (library.stack_data, art_path.u8string());
-            if (const auto* properties = file.audioProperties())
-                song.track_length_seconds = properties->lengthInSeconds();
 
             if (callback != nullptr)
             {
@@ -336,5 +330,3 @@ std::string print_library (const Music_Library& library)
     return result;
 }
 } // namespace chow_tunes::library
-
-JUCE_END_IGNORE_WARNINGS_GCC_LIKE

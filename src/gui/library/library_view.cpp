@@ -1,6 +1,8 @@
+#include <chowdsp_logging/chowdsp_logging.h>
+
 #include "library_view.h"
 #include "play_queue/play_queue.h"
-#include <chowdsp_logging/chowdsp_logging.h>
+#include "library/taglib.h"
 
 namespace chow_tunes::gui
 {
@@ -64,7 +66,7 @@ void Library_View::load_song_list (std::span<const size_t> song_ids, const libra
     for (const auto& [idx, song_id] : chowdsp::enumerate (song_ids))
     {
         const auto& song = library.songs[song_id];
-        song_list_length_seconds += song.track_length_seconds;
+        song_list_length_seconds += get_file_length (song.filepath);
 
         auto& new_cell_entry = song_list.cell_entries[idx];
         new_cell_entry.data = &song;
