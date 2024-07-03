@@ -40,6 +40,17 @@ static void setup_play_menu (juce::PopupMenu& menu,
         play_queue.add_to_queue (songs, Queue_Action::Insert_Last);
     };
     menu.addItem (std::move (insert_last_item));
+
+    juce::PopupMenu::Item open_item;
+    open_item.text = "Open in Browser";
+    open_item.itemID = 103;
+    open_item.action = [provider = std::forward<Songs_Provider> (songs_provider)]
+    {
+        auto songs = provider();
+        const auto filepath = songs.front()->filepath;
+        juce::File { juce::String::fromUTF8 ((const char*) filepath.data(), (int) filepath.size()) }.revealToUser();
+    };
+    menu.addItem (std::move (open_item));
 }
 
 void Library_View::load_song_list (std::span<const size_t> song_ids, const library::Music_Library& library)

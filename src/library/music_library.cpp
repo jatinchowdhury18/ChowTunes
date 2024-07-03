@@ -1,3 +1,5 @@
+#include <chowdsp_logging/chowdsp_logging.h>
+
 #include "music_library.h"
 
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmacro-redefined", "-Wdeprecated-declarations", "-Wdeprecated-dynamic-exception-spec")
@@ -180,7 +182,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         std::filesystem::path artwork_path;
     };
 
-    BS::thread_pool thread_pool { std::thread::hardware_concurrency() - 1 };
+    BS::thread_pool thread_pool { std::min (std::thread::hardware_concurrency(), 8U) };
     auto tag_results = std::make_shared<std::vector<std::future<Tag_Result>>>();
     tag_results->reserve (7'000);
 
@@ -190,7 +192,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         if (dir_entry.is_regular_file()
             && (extension == ".mp3" || extension == ".flac"
                 || extension == ".m4a" || extension == ".aac"
-                || extension == ".ogg"))
+                || extension == ".ogg" || extension == ".wav"))
         {
             tag_results->push_back (thread_pool.submit (
                 [file_path = dir_entry.path()]() -> Tag_Result
@@ -242,16 +244,19 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
                 continue;
             }
 
-            const auto title_str = to_u8string_view (library.stack_data, tag->title());
-            const auto album_str = to_u8string_view (library.stack_data, tag->album());
-            const auto artist_str = to_u8string_view (library.stack_data, tag->artist());
-            if (title_str.empty() || album_str.empty() || artist_str.empty())
-            {
-                continue; // @TODO: figure out what's going on here!
-            }
+            auto title_str = to_u8string_view (library.stack_data, tag->title());
+            auto album_str = to_u8string_view (library.stack_data, tag->album());
+            auto artist_str = to_u8string_view (library.stack_data, tag->artist());
+
+            if (title_str.empty())
+                title_str = temp_string (library.stack_data, file_path.filename().u8string());
+            if (album_str.empty())
+                album_str = temp_string (library.stack_data, file_path.parent_path().u8string());
+            if (artist_str.empty())
+                artist_str = u8"Unknown Artist";
 
             if (song_is_already_in_library (library, artist_str, album_str, title_str))
-                continue;
+                continue; // @TODO: here we should filter by the preferred file format!
 
             const auto song_id = library.songs.size();
             auto& song = library.songs.emplace_back();
