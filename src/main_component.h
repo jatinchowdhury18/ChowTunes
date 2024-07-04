@@ -38,7 +38,7 @@ struct Main_Component : juce::Component,
     play_queue::Play_Queue play_queue;
     audio::Audio_Player_Action_Router action_router { .audio_player = audio_player, .play_queue = play_queue };
 
-    gui::Library_View library_view { play_queue };
+    gui::Library_View library_view { play_queue, app_state };
     gui::Transport_View transport_view { app_state, action_router };
     gui::Play_Queue_View play_queue_view { play_queue };
     gui::Hotkey_Handler hotkey_handler;

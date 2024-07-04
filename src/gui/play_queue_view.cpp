@@ -113,9 +113,9 @@ Play_Queue_View::Play_Queue_View (play_queue::Play_Queue& queue)
                         queue_list.update_list (play_queue);
                         repaint();
                     };
-                    new_cell_component->cell_right_clicked = [this, i = idx, selection_logic = new_cell_component->cell_clicked] (const library::Song& selected_song)
+                    new_cell_component->cell_right_clicked = [this, i = idx, new_cell_component] (const library::Song& selected_song)
                     {
-                        selection_logic (selected_song);
+                        new_cell_component->cell_clicked (selected_song);
 
                         juce::PopupMenu menu;
 

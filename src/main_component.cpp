@@ -23,6 +23,7 @@ Main_Component::Main_Component()
     addAndMakeVisible (transport_view);
     addAndMakeVisible (play_queue_view);
     addChildComponent (search_view);
+    addChildComponent (library_view.metadata_editor.get());
 
     startTimerHz (25);
     setSize (1250, 750);
@@ -45,6 +46,7 @@ void Main_Component::resized()
     transport_view.setBounds (bounds.removeFromBottom (proportionOfHeight (0.2f)));
     play_queue_view.setBounds (bounds.removeFromRight (proportionOfWidth (0.3f)));
     library_view.setBounds (bounds);
+    library_view.metadata_editor->setBounds (getLocalBounds());
 }
 
 void Main_Component::timerCallback()

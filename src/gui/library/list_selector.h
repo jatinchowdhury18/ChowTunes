@@ -50,9 +50,9 @@ struct Cell_Base : juce::Component
     std::u8string_view label_text {};
     std::optional<juce::MouseEvent> latest_mouse_event;
 
-    std::function<void (const Data_Type&)> cell_clicked = [] (const Data_Type&) {};
-    std::function<void (const Data_Type&)> cell_right_clicked = [] (const Data_Type&) {};
-    std::function<void (const Data_Type&)> cell_double_clicked = [] (const Data_Type&) {};
+    juce::dsp::FixedSizeFunction<32, void (const Data_Type&)> cell_clicked = [] (const Data_Type&) {};
+    juce::dsp::FixedSizeFunction<32, void (const Data_Type&)> cell_right_clicked = [] (const Data_Type&) {};
+    juce::dsp::FixedSizeFunction<32, void (const Data_Type&)> cell_double_clicked = [] (const Data_Type&) {};
 
     void select_cell (bool clear_existing_selection = true);
 
