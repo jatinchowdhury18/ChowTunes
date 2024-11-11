@@ -43,7 +43,7 @@ Search_View::Search_View()
     search_entry.setWantsKeyboardFocus (true);
     search_entry.setSelectAllWhenFocused (true);
     search_entry.setMultiLine (false);
-    search_entry.setFont (18.0f);
+    search_entry.setFont (juce::FontOptions { 18.0f });
     search_entry.setJustification (juce::Justification::centred);
     search_entry.onEscapeKey = [this]
     { setVisible (false); };

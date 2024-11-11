@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(ChowTunes VERSION 0.1.0)
+project(ChowTunes VERSION 0.2.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
 message(STATUS "Using VCPKG_DIR: ${VCPKG_DIR}")
@@ -17,8 +17,8 @@ CPMAddPackage(
 )
 CPMAddPackage(
     NAME taglib
-    GITHUB_REPOSITORY taglib/taglib
-    GIT_TAG v1.13.1
+    GITHUB_REPOSITORY jatinchowdhury18/taglib
+    GIT_TAG filestream
     OPTIONS "BUILD_TESTING OFF"
 )
 target_compile_options(tag
@@ -112,7 +112,6 @@ endif()
 
 target_compile_definitions(ChowTunes
     PUBLIC
-        JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_REPORT_APP_USAGE=0
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0

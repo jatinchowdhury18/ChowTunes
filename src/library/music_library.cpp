@@ -2,8 +2,8 @@
 
 #include "music_library.h"
 
-#include "taglib.h"
 #include "bs_thread_pool.h"
+#include "taglib.h"
 
 namespace chow_tunes::library
 {
@@ -163,6 +163,28 @@ static bool song_is_already_in_library (const Music_Library& library,
     return false;
 }
 
+static std::filesystem::path get_artwork_file (const std::filesystem::path& search_path)
+{
+    for (const auto& test_art_file :
+     std::initializer_list<std::string_view> { "cover.jpg", "Folder.jpg" })
+    {
+        auto artwork_file = search_path / test_art_file;
+        if (std::filesystem::exists (artwork_file))
+            return artwork_file;
+    }
+
+    for (std::filesystem::directory_iterator iter { search_path }; iter != std::filesystem::directory_iterator {}; iter++)
+    {
+        const auto file_ext = iter->path().extension();
+        if (std::filesystem::is_regular_file (*iter))
+        {
+            if (file_ext == L".jpg" || file_ext == L".png")
+                return iter->path();
+        }
+    }
+    return {};
+}
+
 std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& path, const Update_Callback& callback)
 {
     auto library_ptr = std::make_shared<Music_Library>();
@@ -172,15 +194,24 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
 
     struct Tag_Result
     {
-        TagLib::FileRef file;
-        const TagLib::Tag* tag = nullptr;
-        std::filesystem::path file_path;
-        std::filesystem::path artwork_path;
+        std::u8string_view title {};
+        std::u8string_view album {};
+        std::u8string_view artist {};
+        std::u8string_view filepath {};
+        std::u8string_view artwork_file {};
+        size_t year = 0;
+        int track_number = -1; // starts indexing at 0, -1 is "invalid"
     };
 
-    BS::thread_pool thread_pool { std::min (std::thread::hardware_concurrency() - 2, 8U) };
+    const auto thread_pool_count = std::min (2 * std::thread::hardware_concurrency() - 1, 8U);
+    BS::thread_pool thread_pool { thread_pool_count };
     auto tag_results = std::make_shared<std::vector<std::future<Tag_Result>>>();
-    tag_results->reserve (7'000);
+    tag_results->reserve (8192);
+
+    auto per_thread_arenas = std::make_shared<std::vector<chowdsp::ChainedArenaAllocator>>();
+    per_thread_arenas->resize (thread_pool_count);
+    for (auto& arena : *per_thread_arenas)
+        arena.reset (1 << 14);
 
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
@@ -190,82 +221,70 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
                 || extension == ".m4a" || extension == ".aac"
                 || extension == ".ogg" || extension == ".wav"))
         {
-            tag_results->push_back (thread_pool.submit (
-                [file_path = dir_entry.path()]() -> Tag_Result
+            tag_results->push_back (thread_pool.submit_task (
+                [file_path = dir_entry.path(), per_thread_arenas]() -> Tag_Result
                 {
+                    auto& arena = per_thread_arenas->at (*BS::this_thread::get_index());
                     TagLib::FileRef file { file_path.c_str(), false };
+                    const auto potential_artwork_file = get_artwork_file (file_path.parent_path());
 
-                    const auto potential_artwork_file = [search_path = file_path.parent_path()]() -> std::filesystem::path
+                    const auto* tag = file.tag();
+                    if (tag == nullptr)
                     {
-                        for (const auto& test_art_file :
-                             std::initializer_list<std::string_view> { "cover.jpg", "Folder.jpg" })
-                        {
-                            auto artwork_file = search_path / test_art_file;
-                            if (std::filesystem::exists (artwork_file))
-                                return artwork_file;
-                        }
-
-                        for (std::filesystem::directory_iterator iter { search_path }; iter != std::filesystem::directory_iterator {}; iter++)
-                        {
-                            const auto file_ext = iter->path().extension();
-                            if (std::filesystem::is_regular_file (*iter))
-                            {
-                                if (file_ext == L".jpg" || file_ext == L".png")
-                                    return iter->path();
-                            }
-                        }
+                        jassertfalse;
                         return {};
-                    }();
+                    }
 
-                    return {
-                        .file = file,
-                        .tag = file.tag(),
-                        .file_path = file_path,
-                        .artwork_path = potential_artwork_file,
+                    auto title_str = to_u8string_view (arena, tag->title());
+                    auto album_str = to_u8string_view (arena, tag->album());
+                    auto artist_str = to_u8string_view (arena, tag->artist());
+
+                    if (title_str.empty())
+                        title_str = temp_string (arena, file_path.filename().u8string());
+                    if (album_str.empty())
+                        album_str = temp_string (arena, file_path.parent_path().u8string());
+                    if (artist_str.empty())
+                        artist_str = u8"Unknown Artist";
+
+                    return
+                    {
+                        .title = title_str,
+                        .album = album_str,
+                        .artist = artist_str,
+                        .filepath = temp_string (arena, file_path.u8string()),
+                        .artwork_file = temp_string (arena, potential_artwork_file.u8string()),
+                        .year = tag->year(),
+                        .track_number = static_cast<int> (tag->track()),
                     };
                 }));
         }
     }
 
-    auto results_loader = [library_ptr, callback, tag_results]() mutable
+    auto results_loader = [library_ptr, callback, tag_results, per_thread_arenas]() mutable
     {
         auto& library = *library_ptr;
         auto last_update_time = std::chrono::steady_clock::now();
         for (auto& tag_result_future : *tag_results)
         {
-            const auto [file, tag, file_path, art_path] = tag_result_future.get();
-            if (tag == nullptr)
-            {
-                jassertfalse;
+            const auto result = tag_result_future.get();
+            if (result.title.empty())
                 continue;
-            }
 
-            auto title_str = to_u8string_view (library.stack_data, tag->title());
-            auto album_str = to_u8string_view (library.stack_data, tag->album());
-            auto artist_str = to_u8string_view (library.stack_data, tag->artist());
-
-            if (title_str.empty())
-                title_str = temp_string (library.stack_data, file_path.filename().u8string());
-            if (album_str.empty())
-                album_str = temp_string (library.stack_data, file_path.parent_path().u8string());
-            if (artist_str.empty())
-                artist_str = u8"Unknown Artist";
-
-            if (song_is_already_in_library (library, artist_str, album_str, title_str))
+            if (song_is_already_in_library (library, result.artist, result.album, result.title))
                 continue; // @TODO: here we should filter by the preferred file format!
 
             const auto song_id = library.songs.size();
             auto& song = library.songs.emplace_back();
-            song.name = title_str;
+            song.name = result.title;
 
-            auto& song_artist = get_artist_for_song (library, song, artist_str);
-            auto& song_album = get_album_for_song (library, song, album_str, tag->year(), song_artist);
+            auto& song_artist = get_artist_for_song (library, song, result.artist);
+            auto& song_album = get_album_for_song (library, song, result.album, result.year, song_artist);
             song_album.song_ids.push_back (song_id);
-            song_album.year = tag->year();
+            song_album.year = result.year;
 
-            song.track_number = static_cast<int> (tag->track());
-            song.filepath = temp_string (library.stack_data, file_path.u8string());
-            song.artwork_file = temp_string (library.stack_data, art_path.u8string());
+            song.track_number = result.track_number;
+            song.filepath = result.filepath;
+            song.artwork_file = result.artwork_file;
 
             if (callback != nullptr)
             {
@@ -280,6 +299,10 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
 
         if (callback != nullptr)
             callback (library, true);
+
+        library_ptr->stack_data = {};
+        for (auto& arena : *per_thread_arenas)
+            library_ptr->stack_data.merge (arena);
     };
 
     if (callback != nullptr)

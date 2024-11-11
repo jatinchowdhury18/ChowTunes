@@ -136,7 +136,7 @@ struct Metadata_Editor : juce::Component
             if (editor->isVisible())
             {
                 editor->setBounds (b.removeFromTop (row_height).reduced (proportionOfWidth (0.01f)));
-                editor->setFont ((float) editor->getHeight() * 0.65f);
+                editor->setFont (juce::FontOptions { (float) editor->getHeight() * 0.65f });
             }
         }
 
