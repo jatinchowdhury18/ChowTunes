@@ -22,7 +22,8 @@ static int64_t u16_string_to_u8 (const TagLib::String& str, char8_t* str_view_st
     return std::distance (str_view_start, str_view_end);
 }
 
-static std::u8string_view to_u8string_view (chowdsp::ChainedArenaAllocator& alloc, const TagLib::String& str)
+template <typename String_Type>
+static std::u8string_view to_u8string_view (chowdsp::ChainedArenaAllocator& alloc, const String_Type& str)
 {
     const auto max_char8_needed = str.size() * 2;
     auto& current_arena = alloc.get_current_arena();
@@ -30,14 +31,14 @@ static std::u8string_view to_u8string_view (chowdsp::ChainedArenaAllocator& allo
     {
         const auto str_view_start = alloc.allocate<char8_t> (max_char8_needed);
         const auto str_view_length = u16_string_to_u8 (str, str_view_start);
-        return { str_view_start, static_cast<size_t> (str_view_length) };
+        return { str_view_start, static_cast<size_t> (str_view_length) }; // NOLINT
     }
 
     const auto str_view_start = alloc.data<char8_t> (current_arena.get_bytes_used());
     const auto str_view_length = u16_string_to_u8 (str, str_view_start);
     [[maybe_unused]] const auto start_ptr = alloc.allocate<char8_t> (str_view_length);
     jassert (start_ptr != nullptr);
-    return { str_view_start, static_cast<size_t> (str_view_length) };
+    return { str_view_start, static_cast<size_t> (str_view_length) }; // NOLINT
 }
 
 static bool equals_ignore_case (const std::u8string_view& lhs, const std::u8string_view& rhs)
@@ -163,27 +164,76 @@ static bool song_is_already_in_library (const Music_Library& library,
     return false;
 }
 
-static std::filesystem::path get_artwork_file (const std::filesystem::path& search_path)
+static std::filesystem::path get_artwork_file (const std::filesystem::path& song_file_path)
 {
+    const auto search_path = song_file_path.parent_path();
     for (const auto& test_art_file :
-     std::initializer_list<std::string_view> { "cover.jpg", "Folder.jpg" })
+         std::initializer_list<std::string_view> { "cover.jpg", "Folder.jpg" })
     {
         auto artwork_file = search_path / test_art_file;
         if (std::filesystem::exists (artwork_file))
             return artwork_file;
     }
 
-    for (std::filesystem::directory_iterator iter { search_path }; iter != std::filesystem::directory_iterator {}; iter++)
-    {
-        const auto file_ext = iter->path().extension();
-        if (std::filesystem::is_regular_file (*iter))
-        {
-            if (file_ext == L".jpg" || file_ext == L".png")
-                return iter->path();
-        }
-    }
+    // for (std::filesystem::directory_iterator iter { search_path }; iter != std::filesystem::directory_iterator {}; iter++)
+    // {
+    //     const auto file_ext = iter->path().extension();
+    //     if (std::filesystem::exists (*iter))
+    //     {
+    //         if (file_ext == L".jpg" || file_ext == L".png")
+    //             return iter->path();
+    //     }
+    // }
+
     return {};
 }
+
+struct Tag_Result
+{
+    std::u8string_view title {};
+    std::u8string_view album {};
+    std::u8string_view artist {};
+    std::u8string_view filepath {};
+    std::u8string_view artwork_file {};
+    size_t year = 0;
+    int track_number = -1; // starts indexing at 0, -1 is "invalid"
+};
+
+struct Tag_Results_Array
+{
+    struct Chunk
+    {
+        static constexpr size_t chunk_size = 100;
+        std::array<std::future<Tag_Result>, chunk_size> chunk {};
+        size_t count = 0;
+        Chunk* next = nullptr;
+    };
+
+    chowdsp::ChainedArenaAllocator* arena {};
+    Chunk head_chunk {};
+    Chunk* tail_chunk = &head_chunk;
+
+    void insert (std::future<Tag_Result>&& next_result)
+    {
+        if (tail_chunk->count == Chunk::chunk_size) [[unlikely]]
+        {
+            tail_chunk->next = new (arena->allocate_bytes (sizeof (Chunk), alignof (Chunk))) Chunk {};
+            tail_chunk = tail_chunk->next;
+        }
+
+        tail_chunk->chunk[tail_chunk->count++] = std::move (next_result);
+    }
+
+    template <typename Func>
+    void for_each (Func&& func)
+    {
+        for (auto* chunk = &head_chunk; chunk != nullptr; chunk = chunk->next)
+        {
+            for (size_t i = 0; i < chunk->count; ++i)
+                func (chunk->chunk[i]);
+        }
+    }
+};
 
 std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& path, const Update_Callback& callback)
 {
@@ -192,26 +242,15 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
     library_ptr->albums.reserve (700);
     library_ptr->songs.reserve (7'000);
 
-    struct Tag_Result
-    {
-        std::u8string_view title {};
-        std::u8string_view album {};
-        std::u8string_view artist {};
-        std::u8string_view filepath {};
-        std::u8string_view artwork_file {};
-        size_t year = 0;
-        int track_number = -1; // starts indexing at 0, -1 is "invalid"
-    };
-
     const auto thread_pool_count = std::min (2 * std::thread::hardware_concurrency() - 1, 8U);
     BS::thread_pool thread_pool { thread_pool_count };
-    auto tag_results = std::make_shared<std::vector<std::future<Tag_Result>>>();
-    tag_results->reserve (8192);
 
-    auto per_thread_arenas = std::make_shared<std::vector<chowdsp::ChainedArenaAllocator>>();
-    per_thread_arenas->resize (thread_pool_count);
-    for (auto& arena : *per_thread_arenas)
-        arena.reset (1 << 14);
+    auto* local_arena = new chowdsp::ChainedArenaAllocator { 10 * sizeof (Tag_Results_Array::Chunk) };
+    auto* tag_results = new (local_arena->allocate_bytes (sizeof (Tag_Results_Array), alignof (Tag_Results_Array))) Tag_Results_Array { .arena = local_arena };
+
+    auto per_thread_arenas = chowdsp::arena::make_span<chowdsp::ChainedArenaAllocator> (*local_arena, thread_pool_count);
+    for (auto& arena : per_thread_arenas)
+        arena = chowdsp::ChainedArenaAllocator { 1 << 14 };
 
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
@@ -221,12 +260,12 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
                 || extension == ".m4a" || extension == ".aac"
                 || extension == ".ogg" || extension == ".wav"))
         {
-            tag_results->push_back (thread_pool.submit_task (
+            tag_results->insert (thread_pool.submit_task (
                 [file_path = dir_entry.path(), per_thread_arenas]() -> Tag_Result
                 {
-                    auto& arena = per_thread_arenas->at (*BS::this_thread::get_index());
+                    auto& arena = per_thread_arenas[*BS::this_thread::get_index()];
                     TagLib::FileRef file { file_path.c_str(), false };
-                    const auto potential_artwork_file = get_artwork_file (file_path.parent_path());
+                    const auto potential_artwork_file = get_artwork_file (file_path);
 
                     const auto* tag = file.tag();
                     if (tag == nullptr)
@@ -246,8 +285,7 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
                     if (artist_str.empty())
                         artist_str = u8"Unknown Artist";
 
-                    return
-                    {
+                    return {
                         .title = title_str,
                         .album = album_str,
                         .artist = artist_str,
@@ -260,49 +298,52 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
         }
     }
 
-    auto results_loader = [library_ptr, callback, tag_results, per_thread_arenas]() mutable
+    auto results_loader = [local_arena, library_ptr, callback, tag_results, per_thread_arenas]() mutable
     {
         auto& library = *library_ptr;
         auto last_update_time = std::chrono::steady_clock::now();
-        for (auto& tag_result_future : *tag_results)
-        {
-            const auto result = tag_result_future.get();
-            if (result.title.empty())
-                continue;
-
-            if (song_is_already_in_library (library, result.artist, result.album, result.title))
-                continue; // @TODO: here we should filter by the preferred file format!
-
-            const auto song_id = library.songs.size();
-            auto& song = library.songs.emplace_back();
-            song.name = result.title;
-
-            auto& song_artist = get_artist_for_song (library, song, result.artist);
-            auto& song_album = get_album_for_song (library, song, result.album, result.year, song_artist);
-            song_album.song_ids.push_back (song_id);
-            song_album.year = result.year;
-
-            song.track_number = result.track_number;
-            song.filepath = result.filepath;
-            song.artwork_file = result.artwork_file;
-
-            if (callback != nullptr)
+        tag_results->for_each (
+            [&] (std::future<Tag_Result>& tag_result_future)
             {
-                auto now = std::chrono::steady_clock::now();
-                if (now - last_update_time > std::chrono::milliseconds { 100 })
+                const auto result = tag_result_future.get();
+                if (result.title.empty())
+                    return;
+
+                if (song_is_already_in_library (library, result.artist, result.album, result.title))
+                    return; // @TODO: here we should filter by the preferred file format!
+
+                const auto song_id = library.songs.size();
+                auto& song = library.songs.emplace_back();
+                song.name = result.title;
+
+                auto& song_artist = get_artist_for_song (library, song, result.artist);
+                auto& song_album = get_album_for_song (library, song, result.album, result.year, song_artist);
+                song_album.song_ids.push_back (song_id);
+                song_album.year = result.year;
+
+                song.track_number = result.track_number;
+                song.filepath = result.filepath;
+                song.artwork_file = result.artwork_file;
+
+                if (callback != nullptr)
                 {
-                    last_update_time = now;
-                    callback (library, false);
+                    auto now = std::chrono::steady_clock::now();
+                    if (now - last_update_time > std::chrono::milliseconds { 100 })
+                    {
+                        last_update_time = now;
+                        callback (library, false);
+                    }
                 }
-            }
-        }
+            });
 
         if (callback != nullptr)
             callback (library, true);
 
         library_ptr->stack_data = {};
-        for (auto& arena : *per_thread_arenas)
+        for (auto& arena : per_thread_arenas)
             library_ptr->stack_data.merge (arena);
+
+        delete local_arena;
     };
 
     if (callback != nullptr)
