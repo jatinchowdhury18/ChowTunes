@@ -199,6 +199,40 @@ struct Tag_Result
     int track_number = -1; // starts indexing at 0, -1 is "invalid"
 };
 
+static Tag_Result make_tag_result (TagLib::FileRef& file,
+                                   const std::filesystem::path& file_path,
+                                   const std::filesystem::path& potential_artwork_file,
+                                   chowdsp::ChainedArenaAllocator& arena)
+{
+    const auto* tag = file.tag();
+    if (tag == nullptr)
+    {
+        jassertfalse;
+        return {};
+    }
+
+    auto title_str = to_u8string_view (arena, tag->title());
+    auto album_str = to_u8string_view (arena, tag->album());
+    auto artist_str = to_u8string_view (arena, tag->artist());
+
+    if (title_str.empty())
+        title_str = temp_string (arena, file_path.filename().u8string());
+    if (album_str.empty())
+        album_str = temp_string (arena, file_path.parent_path().u8string());
+    if (artist_str.empty())
+        artist_str = u8"Unknown Artist";
+
+    return {
+        .title = title_str,
+        .album = album_str,
+        .artist = artist_str,
+        .filepath = temp_string (arena, file_path.u8string()),
+        .artwork_file = temp_string (arena, potential_artwork_file.u8string()),
+        .year = tag->year(),
+        .track_number = static_cast<int> (tag->track()),
+    };
+}
+
 struct Tag_Results_Array
 {
     struct Chunk
@@ -242,7 +276,9 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
     library_ptr->albums.reserve (700);
     library_ptr->songs.reserve (7'000);
 
-    const auto thread_pool_count = std::min (2 * std::thread::hardware_concurrency() - 1, 8U);
+    // Tag parsing is I/O-bound on a cold cache (blocking file open + read), so the pool is sized
+    // well past hardware_concurrency to keep many reads in flight and hide per-file disk latency.
+    const auto thread_pool_count = 64U;
     BS::thread_pool thread_pool { thread_pool_count };
 
     auto* local_arena = new chowdsp::ChainedArenaAllocator { 10 * sizeof (Tag_Results_Array::Chunk) };
@@ -255,47 +291,27 @@ std::shared_ptr<Music_Library> index_directory (const std::filesystem::path& pat
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator (path))
     {
         const auto extension = dir_entry.path().extension();
-        if (dir_entry.is_regular_file()
-            && (extension == ".mp3" || extension == ".flac"
-                || extension == ".m4a" || extension == ".aac"
-                || extension == ".ogg" || extension == ".wav"))
-        {
-            tag_results->insert (thread_pool.submit_task (
-                [file_path = dir_entry.path(), per_thread_arenas]() -> Tag_Result
-                {
-                    auto& arena = per_thread_arenas[*BS::this_thread::get_index()];
-                    TagLib::FileRef file { file_path.c_str(), false };
-                    const auto potential_artwork_file = get_artwork_file (file_path);
+        if (! (dir_entry.is_regular_file()
+               && (extension == ".mp3" || extension == ".flac"
+                   || extension == ".m4a" || extension == ".aac"
+                   || extension == ".ogg" || extension == ".wav")))
+            continue;
 
-                    const auto* tag = file.tag();
-                    if (tag == nullptr)
-                    {
-                        jassertfalse;
-                        return {};
-                    }
-
-                    auto title_str = to_u8string_view (arena, tag->title());
-                    auto album_str = to_u8string_view (arena, tag->album());
-                    auto artist_str = to_u8string_view (arena, tag->artist());
-
-                    if (title_str.empty())
-                        title_str = temp_string (arena, file_path.filename().u8string());
-                    if (album_str.empty())
-                        album_str = temp_string (arena, file_path.parent_path().u8string());
-                    if (artist_str.empty())
-                        artist_str = u8"Unknown Artist";
-
-                    return {
-                        .title = title_str,
-                        .album = album_str,
-                        .artist = artist_str,
-                        .filepath = temp_string (arena, file_path.u8string()),
-                        .artwork_file = temp_string (arena, potential_artwork_file.u8string()),
-                        .year = tag->year(),
-                        .track_number = static_cast<int> (tag->track()),
-                    };
-                }));
-        }
+        tag_results->insert (thread_pool.submit_task (
+            [file_path = dir_entry.path(), per_thread_arenas]() -> Tag_Result
+            {
+                auto& arena = per_thread_arenas[*BS::this_thread::get_index()];
+                // Skip the ID3v1/APE tail-scan (mp3/flac): it costs a second cold random
+                // read at the opposite end of the file for tag data we never use, since
+                // make_tag_result() already falls back to filename/foldername when the
+                // ID3v2/Xiph tag is missing a field. Only set for this read-only scan pass
+                // (thread-local) so the metadata editor's save() path is unaffected.
+                TagLib::fastScanModeFlag() = true;
+                TagLib::FileRef file { file_path.c_str(), false };
+                TagLib::fastScanModeFlag() = false;
+                const auto potential_artwork_file = get_artwork_file (file_path);
+                return make_tag_result (file, file_path, potential_artwork_file, arena);
+            }));
     }
 
     auto results_loader = [local_arena, library_ptr, callback, tag_results, per_thread_arenas]() mutable

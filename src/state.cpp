@@ -53,7 +53,7 @@ void State::load_state (Main_Component& main)
         });
 
     if (state_save_path.existsAsFile())
-        chowdsp::Serialization::deserialize<chowdsp::JSONSerializer> (state_save_path, *this);
+        deserialize_json (chowdsp::JSONUtils::fromFile (state_save_path), *this);
 }
 
 void State::save_state() const
@@ -63,7 +63,7 @@ void State::save_state() const
 
     state_save_path.deleteFile();
     state_save_path.create();
-    chowdsp::Serialization::serialize<chowdsp::JSONSerializer> (*this, state_save_path);
+    chowdsp::JSONUtils::toFile (serialize_json (*this), state_save_path);
 }
 
 void State::select_library_folder()

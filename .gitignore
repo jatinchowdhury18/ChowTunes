@@ -1,7 +1,11 @@
 build*
 *-build-*
+scripts/
 
 .vscode/
 .idea/
+.focus-config
+*.raddbg_project
+.zed/
 
 .DS_Store

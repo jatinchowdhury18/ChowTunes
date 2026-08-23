@@ -44,3 +44,35 @@ and has an extremely minimal feature set, but I think it will get the job done (
 ## License
 
 Chow Tunes is licensed under the MIT license.
+
+= OG
+
+COLD:
+$ ./build/ChowTunes_artefacts/Release/ChowTunes.exe
+[scan] Directory enumeration + task submission: 1540 ms
+[scan] Tag read histogram (per-file, parallel):  <1ms: 222  1-5ms: 5519  5-20ms: 1656  20-100ms: 145  >=100ms: 0  (slowest: 42 ms)
+[scan] Tag loading (incl. thread pool wait): 2581 ms
+[scan] Total scan time: 4121 ms
+
+WARM:
+$ ./build/ChowTunes_artefacts/Release/ChowTunes.exe
+[scan] Directory enumeration + task submission: 77 ms
+[scan] Tag read histogram (per-file, parallel):  <1ms: 7343  1-5ms: 191  5-20ms: 8  20-100ms: 0  >=100ms: 0  (slowest: 6 ms)
+[scan] Tag loading (incl. thread pool wait): 251 ms
+[scan] Total scan time: 329 ms
+
+= Larger Pool
+
+COLD:
+$ ./build/ChowTunes_artefacts/Release/ChowTunes.exe
+[scan] Directory enumeration + task submission: 107 ms
+[scan] Tag read histogram (per-file, parallel):  <1ms: 0  1-5ms: 372  5-20ms: 5935  20-100ms: 1235  >=100ms: 0  (slowest: 80 ms)
+[scan] Tag loading (incl. thread pool wait): 1657 ms
+[scan] Total scan time: 1765 ms
+
+WARM:
+$ ./build/ChowTunes_artefacts/Release/ChowTunes.exe
+[scan] Directory enumeration + task submission: 138 ms
+[scan] Tag read histogram (per-file, parallel):  <1ms: 4977  1-5ms: 2150  5-20ms: 414  20-100ms: 1  >=100ms: 0  (slowest: 20 ms)
+[scan] Tag loading (incl. thread pool wait): 118 ms
+[scan] Total scan time: 256 ms
